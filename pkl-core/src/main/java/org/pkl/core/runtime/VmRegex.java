@@ -60,11 +60,6 @@ public final class VmRegex extends VmValue {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertRegex(this, path);
-  }
-
-  @Override
   public boolean equals(@Nullable Object obj) {
     if (this == obj) return true;
     if (!(obj instanceof VmRegex)) return false;

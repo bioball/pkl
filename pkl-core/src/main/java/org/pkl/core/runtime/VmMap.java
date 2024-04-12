@@ -236,11 +236,6 @@ public final class VmMap extends VmValue implements Iterable<Map.Entry<Object, O
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertMap(this, path);
-  }
-
-  @Override
   @TruffleBoundary
   public boolean equals(@Nullable Object other) {
     if (this == other) return true;

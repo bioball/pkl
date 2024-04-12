@@ -172,11 +172,6 @@ public final class VmFunction extends VmObjectLike {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertFunction(this, path);
-  }
-
-  @Override
   public boolean equals(Object obj) {
     return this == obj;
   }

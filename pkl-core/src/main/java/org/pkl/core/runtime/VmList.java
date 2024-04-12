@@ -415,11 +415,6 @@ public final class VmList extends VmCollection {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertList(this, path);
-  }
-
-  @Override
   @TruffleBoundary
   public boolean equals(@Nullable Object other) {
     if (this == other) return true;

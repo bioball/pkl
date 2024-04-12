@@ -262,11 +262,6 @@ public final class VmTypeAlias extends VmValue {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertTypeAlias(this, path);
-  }
-
-  @Override
   public boolean equals(Object obj) {
     return this == obj;
   }

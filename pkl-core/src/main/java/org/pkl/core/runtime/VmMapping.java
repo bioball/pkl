@@ -119,11 +119,6 @@ public final class VmMapping extends VmObject {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertMapping(this, path);
-  }
-
-  @Override
   @TruffleBoundary
   public boolean equals(Object obj) {
     if (this == obj) return true;

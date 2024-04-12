@@ -93,11 +93,6 @@ public final class VmDynamic extends VmObject {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertDynamic(this, path);
-  }
-
-  @Override
   @TruffleBoundary
   public boolean equals(Object obj) {
     if (this == obj) return true;

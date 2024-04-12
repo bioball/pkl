@@ -96,11 +96,6 @@ public final class VmListing extends VmObject {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertListing(this, path);
-  }
-
-  @Override
   @TruffleBoundary
   public boolean equals(@Nullable Object obj) {
     if (this == obj) return true;

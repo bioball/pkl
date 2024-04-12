@@ -97,11 +97,6 @@ public final class VmPair extends VmValue implements Iterable<Object> {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertPair(this, path);
-  }
-
-  @Override
   @TruffleBoundary
   public boolean equals(@Nullable Object obj) {
     if (this == obj) return true;

@@ -59,8 +59,6 @@ public abstract class VmValue {
 
   public abstract void accept(VmValueVisitor visitor);
 
-  public abstract <T> T accept(VmValueConverter<T> converter, Iterable<Object> path);
-
   /** Forces recursive (deep) evaluation of the given value. */
   public static void force(Object value, boolean allowUndefinedValues) {
     if (value instanceof VmValue) {

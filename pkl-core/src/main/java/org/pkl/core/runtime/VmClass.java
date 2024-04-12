@@ -630,11 +630,6 @@ public final class VmClass extends VmValue {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertClass(this, path);
-  }
-
-  @Override
   public String toString() {
     return getDisplayName();
   }

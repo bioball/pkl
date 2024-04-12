@@ -128,11 +128,6 @@ public final strictfp class VmDataSize extends VmValue implements Comparable<VmD
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertDataSize(this, path);
-  }
-
-  @Override
   public int compareTo(VmDataSize other) {
     // use same conversion strategy as add/subtract
     if (unit.ordinal() <= other.unit.ordinal()) {

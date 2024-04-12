@@ -48,41 +48,11 @@ public interface VmValueConverter<T> {
 
   T convertFloat(Double value, Iterable<Object> path);
 
-  T convertDuration(VmDuration value, Iterable<Object> path);
-
-  T convertDataSize(VmDataSize value, Iterable<Object> path);
-
-  T convertIntSeq(VmIntSeq value, Iterable<Object> path);
-
-  T convertList(VmList value, Iterable<Object> path);
-
-  T convertSet(VmSet value, Iterable<Object> path);
-
-  T convertMap(VmMap value, Iterable<Object> path);
-
-  T convertTyped(VmTyped value, Iterable<Object> path);
-
-  T convertDynamic(VmDynamic value, Iterable<Object> path);
-
-  T convertListing(VmListing value, Iterable<Object> path);
-
-  T convertMapping(VmMapping value, Iterable<Object> path);
-
-  T convertClass(VmClass value, Iterable<Object> path);
-
-  T convertTypeAlias(VmTypeAlias value, Iterable<Object> path);
-
-  T convertNull(VmNull value, Iterable<Object> path);
-
-  T convertPair(VmPair value, Iterable<Object> path);
-
-  T convertRegex(VmRegex value, Iterable<Object> path);
-
-  T convertFunction(VmFunction value, Iterable<Object> path);
+  T convertVmValue(VmValue value, Iterable<Object> path);
 
   default T convert(Object value, Iterable<Object> path) {
     if (value instanceof VmValue) {
-      return ((VmValue) value).accept(this, path);
+      return convertVmValue((VmValue) value, path);
     }
     if (value instanceof String) {
       return convertString((String) value, path);

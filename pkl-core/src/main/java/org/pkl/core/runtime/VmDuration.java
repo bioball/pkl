@@ -124,11 +124,6 @@ public final strictfp class VmDuration extends VmValue implements Comparable<VmD
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertDuration(this, path);
-  }
-
-  @Override
   public int compareTo(VmDuration other) {
     // use same conversion strategy as add/subtract
     if (unit.ordinal() <= other.unit.ordinal()) {

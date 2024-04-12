@@ -26,7 +26,7 @@ foo = new Listing {
 output {
   renderer = new PcfRenderer {
     converters {
-      [Any] = (o) -> if (o is module) o else "Unconverted class: \(o.getClass())"
+      [Any] = (o) -> if (o is module | Listing | String) o else "Unconverted class: \(o.getClass())"
       [Dog] = (d) -> "Dog(\(d.age))"
     }
   }

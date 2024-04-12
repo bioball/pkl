@@ -72,11 +72,6 @@ public final class VmIntSeq extends VmValue implements Iterable<Long> {
   }
 
   @Override
-  public <T> T accept(VmValueConverter<T> converter, Iterable<Object> path) {
-    return converter.convertIntSeq(this, path);
-  }
-
-  @Override
   public PrimitiveIterator.OfLong iterator() {
     return new PrimitiveIterator.OfLong() {
       boolean hasNext = !isEmpty();

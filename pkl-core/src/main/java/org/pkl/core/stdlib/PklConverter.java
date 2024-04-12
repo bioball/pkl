@@ -24,150 +24,37 @@ public final class PklConverter implements VmValueConverter<Object> {
   private final Map<VmClass, VmFunction> typeConverters;
   private final Pair<Object[], VmFunction>[] pathConverters;
 
-  private final @Nullable VmFunction stringConverter;
-  private final @Nullable VmFunction booleanConverter;
-  private final @Nullable VmFunction intConverter;
-  private final @Nullable VmFunction floatConverter;
-  private final @Nullable VmFunction durationConverter;
-  private final @Nullable VmFunction dataSizeConverter;
-  private final @Nullable VmFunction intSeqConverter;
-  private final @Nullable VmFunction listConverter;
-  private final @Nullable VmFunction setConverter;
-  private final @Nullable VmFunction mapConverter;
-  private final @Nullable VmFunction listingConverter;
-  private final @Nullable VmFunction mappingConverter;
-  private final @Nullable VmFunction dynamicConverter;
-  private final @Nullable VmFunction pairConverter;
-  private final @Nullable VmFunction regexConverter;
-  private final @Nullable VmFunction nullConverter;
-  private final @Nullable VmFunction classConverter;
-  private final @Nullable VmFunction typeAliasConverter;
-
   public PklConverter(VmMapping converters) {
-    // As of 0.18, `converters` is forced by the mapping type check,
+    // `converters` is technically already forced beceause of https://github.com/apple/pkl/issues/406,
     // but let's not rely on this implementation detail.
     converters.force(false, false);
     typeConverters = createTypeConverters(converters);
     pathConverters = createPathConverters(converters);
-
-    stringConverter = typeConverters.get(BaseModule.getStringClass());
-    booleanConverter = typeConverters.get(BaseModule.getBooleanClass());
-    intConverter = typeConverters.get(BaseModule.getIntClass());
-    floatConverter = typeConverters.get(BaseModule.getFloatClass());
-    durationConverter = typeConverters.get(BaseModule.getDurationClass());
-    dataSizeConverter = typeConverters.get(BaseModule.getDataSizeClass());
-    intSeqConverter = typeConverters.get(BaseModule.getIntSeqClass());
-    listConverter = typeConverters.get(BaseModule.getListClass());
-    setConverter = typeConverters.get(BaseModule.getSetClass());
-    mapConverter = typeConverters.get(BaseModule.getMapClass());
-    listingConverter = typeConverters.get(BaseModule.getListingClass());
-    mappingConverter = typeConverters.get(BaseModule.getMappingClass());
-    dynamicConverter = typeConverters.get(BaseModule.getDynamicClass());
-    pairConverter = typeConverters.get(BaseModule.getPairClass());
-    regexConverter = typeConverters.get(BaseModule.getRegexClass());
-    nullConverter = typeConverters.get(BaseModule.getNullClass());
-    classConverter = typeConverters.get(BaseModule.getClassClass());
-    typeAliasConverter = typeConverters.get(BaseModule.getTypeAliasClass());
   }
 
   @Override
   public Object convertString(String value, Iterable<Object> path) {
-    return doConvert(value, path, stringConverter);
+    return doConvert(value, path, findTypeConverter(BaseModule.getStringClass()));
   }
 
   @Override
   public Object convertBoolean(Boolean value, Iterable<Object> path) {
-    return doConvert(value, path, booleanConverter);
+    return doConvert(value, path, findTypeConverter(BaseModule.getBooleanClass()));
   }
 
   @Override
   public Object convertInt(Long value, Iterable<Object> path) {
-    return doConvert(value, path, intConverter);
+    return doConvert(value, path, findTypeConverter(BaseModule.getIntClass()));
   }
 
   @Override
   public Object convertFloat(Double value, Iterable<Object> path) {
-    return doConvert(value, path, floatConverter);
+    return doConvert(value, path, findTypeConverter(BaseModule.getFloatClass()));
   }
 
   @Override
-  public Object convertDuration(VmDuration value, Iterable<Object> path) {
-    return doConvert(value, path, durationConverter);
-  }
-
-  @Override
-  public Object convertDataSize(VmDataSize value, Iterable<Object> path) {
-    return doConvert(value, path, dataSizeConverter);
-  }
-
-  @Override
-  public Object convertIntSeq(VmIntSeq value, Iterable<Object> path) {
-    return doConvert(value, path, intSeqConverter);
-  }
-
-  @Override
-  public Object convertList(VmList value, Iterable<Object> path) {
-    return doConvert(value, path, listConverter);
-  }
-
-  @Override
-  public Object convertSet(VmSet value, Iterable<Object> path) {
-    return doConvert(value, path, setConverter);
-  }
-
-  @Override
-  public Object convertMap(VmMap value, Iterable<Object> path) {
-    return doConvert(value, path, mapConverter);
-  }
-
-  @Override
-  public Object convertListing(VmListing value, Iterable<Object> path) {
-    return doConvert(value, path, listingConverter);
-  }
-
-  @Override
-  public Object convertMapping(VmMapping value, Iterable<Object> path) {
-    return doConvert(value, path, mappingConverter);
-  }
-
-  @Override
-  public Object convertDynamic(VmDynamic value, Iterable<Object> path) {
-    return doConvert(value, path, dynamicConverter);
-  }
-
-  @Override
-  public Object convertTyped(VmTyped value, Iterable<Object> path) {
+  public Object convertVmValue(VmValue value, Iterable<Object> path) {
     return doConvert(value, path, findTypeConverter(value.getVmClass()));
-  }
-
-  @Override
-  public Object convertPair(VmPair value, Iterable<Object> path) {
-    return doConvert(value, path, pairConverter);
-  }
-
-  @Override
-  public Object convertRegex(VmRegex value, Iterable<Object> path) {
-    return doConvert(value, path, regexConverter);
-  }
-
-  @Override
-  public Object convertFunction(VmFunction value, Iterable<Object> path) {
-    return doConvert(value, path, typeConverters.get(value.getVmClass()));
-  }
-
-  @Override
-  public Object convertClass(VmClass value, Iterable<Object> path) {
-    return doConvert(value, path, classConverter);
-  }
-
-  @Override
-  public Object convertTypeAlias(VmTypeAlias value, Iterable<Object> path) {
-    return doConvert(value, path, typeAliasConverter);
-  }
-
-  @Override
-  public Object convertNull(VmNull value, Iterable<Object> path) {
-    return doConvert(value, path, nullConverter);
   }
 
   private Map<VmClass, VmFunction> createTypeConverters(VmMapping converters) {
