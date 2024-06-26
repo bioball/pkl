@@ -106,7 +106,7 @@ open class BuildInfo(project: Project) {
 
   val pklVersion: String by lazy {
     if (isReleaseBuild) {
-      project.version.toString()
+      project.version.toString() + "+compat"
     } else {
       project.version.toString().replace("-SNAPSHOT", "-dev+$commitId")
     }

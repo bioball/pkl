@@ -213,8 +213,6 @@ fun Exec.configureExecutable(
       add("-Djavax.net.ssl.trustStore=${trustStore.get().asFile}")
       add("-Djavax.net.ssl.trustStorePassword=$trustStorePassword")
       add("-Djavax.net.ssl.trustStoreType=PKCS12")
-      // security property "ocsp.enable=true" is set in Main.kt
-      add("-Dcom.sun.net.ssl.checkRevocation=true")
       add("-H:IncludeResources=org/pkl/core/stdlib/.*\\.pkl")
       add("-H:IncludeResources=org/jline/utils/.*")
       add("-H:IncludeResourceBundles=org.pkl.core.errorMessages")
@@ -228,6 +226,7 @@ fun Exec.configureExecutable(
       add("-H:+ReportExceptionStackTraces")
       // disable automatic support for JVM CLI options (puts our main class in full control of argument parsing)
       add("-H:-ParseRuntimeOptions")
+      add("-march=compatibility")
       // quick build mode: 40% faster compilation, 20% smaller (but presumably also slower) executable
       if (!buildInfo.isReleaseBuild) {
         add("-Ob")
@@ -316,7 +315,7 @@ val windowsExecutableAmd64: TaskProvider<Exec> by tasks.registering(Exec::class)
   configureExecutable(
     buildInfo.graalVmAmd64,
     layout.buildDirectory.file("executable/pkl-windows-amd64"),
-    listOf("-Dfile.encoding=UTF-8", "-march=compatibility")
+    listOf("-Dfile.encoding=UTF-8")
   )
 }
 
