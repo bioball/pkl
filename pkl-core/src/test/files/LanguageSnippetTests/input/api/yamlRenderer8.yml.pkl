@@ -1,4 +1,4 @@
-// Test that non-String scalars can be rendered as YAML map keys.
+// Test that non-String keys can be rendered as YAML map keys.
 mappingInt = new Mapping {
   [5] = "abc"
   [10] = "def"
@@ -27,6 +27,22 @@ mappingNull = new Mapping {
 }
 
 mapNull = mappingNull.toMap()
+
+mappingOfListing = new Mapping {
+  [new Listing { 1; 2; 3 }] = "abc"
+}
+
+mapOfListing = mappingOfListing.toMap()
+
+mappingOfMapping = new Mapping {
+  [new Mapping { ["one"] = "one"}] = "abc"
+}
+
+mapOfMapping = mappingOfMapping.toMap()
+
+mappingOfNestedObject = new Mapping {
+  [new Dynamic { foo { bar { 1 } } }] = "abc"
+}
 
 output {
   renderer = new YamlRenderer {}

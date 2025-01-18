@@ -24,3 +24,29 @@ mappingNull:
   null: abc
 mapNull:
   null: abc
+mappingOfListing:
+  ?
+  - 1
+  - 2
+  - 3
+  : abc
+mapOfListing:
+  ?
+  - 1
+  - 2
+  - 3
+  : abc
+mappingOfMapping:
+  ?
+    one: one
+  : abc
+mapOfMapping:
+  ?
+    one: one
+  : abc
+mappingOfNestedObject:
+  ?
+    foo:
+      bar:
+      - 1
+  : abc

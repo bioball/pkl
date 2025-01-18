@@ -306,7 +306,10 @@ public final class YamlRendererNodes {
         return;
       }
 
-      cannotRenderNonScalarKey(key);
+      builder.append("?");
+      visit(key);
+      startNewLine();
+      builder.append(':');
     }
 
     @Override
