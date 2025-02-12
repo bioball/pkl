@@ -31,7 +31,7 @@ A language binding for Pkl should generally have the following components:
 Here is a sample flow for evaluating a module with the following contents:
 
 .\file:///path/to/myModule.pkl
-[source,{pkl}]
+[source,pkl]
 ----
 module MyModule
 
@@ -40,7 +40,7 @@ theModules = import*("customfs:/*.pkl")
 
 . Client sends xref:message-passing-api.adoc#create-evaluator-request[Create Evaluator Request], including `customfs` as a custom module reader.
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x20,
@@ -60,7 +60,7 @@ theModules = import*("customfs:/*.pkl")
 ----
 . Server sends xref:message-passing-api.adoc#create-evaluator-response[Create Evaluator Response], with an evaluator id.
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x21,
@@ -72,7 +72,7 @@ theModules = import*("customfs:/*.pkl")
 ----
 . Client sends xref:message-passing-api.adoc#evaluate-request[Evaluate Request], providing the module's URI.
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x23,
@@ -85,7 +85,7 @@ theModules = import*("customfs:/*.pkl")
 ----
 . During evaluation, server evaluates `import*("customfs:/*.pkl")`, and sends xref:message-passing-api.adoc#list-modules-request[List Modules Request].
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x2c,
@@ -99,7 +99,7 @@ theModules = import*("customfs:/*.pkl")
 . Client responds with xref:message-passing-api.adoc#list-modules-response[List Modules Response].
 In our pretend scenario, there is only one file; `foo.pkl`.
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x2d,
@@ -117,7 +117,7 @@ In our pretend scenario, there is only one file; `foo.pkl`.
 ----
 . Server sends xref:message-passing-api.adoc#read-module-request[Read Module Request] to read `foo.pkl`.
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x28,
@@ -130,7 +130,7 @@ In our pretend scenario, there is only one file; `foo.pkl`.
 ----
 . Client responds with the module's contents
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x29,
@@ -143,7 +143,7 @@ In our pretend scenario, there is only one file; `foo.pkl`.
 ----
 . Server finishes evaluation, and responds with the xref:message-passing-api.adoc#evaluate-response[Evaluate Response].
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x24,
@@ -156,7 +156,7 @@ In our pretend scenario, there is only one file; `foo.pkl`.
 ----
 . Client sends xref:message-passing-api.adoc#close-evaluator[Close Evaluator].
 +
-[source,json]
+[source,json,opts=novalidate]
 ----
 [
   0x22,

@@ -51,7 +51,7 @@ A module header consists of the following clauses, each of which is optional:
 - Import clauses
 
 .module.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 module com.example.Foo // <1>
 
@@ -69,7 +69,7 @@ import "Buz.pkl" // <3>
 Match the name of the module with the name of the file.
 
 .MyModule.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 module MyModule
 
@@ -80,7 +80,7 @@ If a module is meant to be published, add a module clause, `@ModuleInfo` annotat
 Modules that do not get published anywhere may omit a module clause.
 
 .MyModule.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 /// Used for some type of purpose. <1>
 @ModuleInfo { minPklVersion = "0.24.0" } // <2>
@@ -101,7 +101,7 @@ Sort imports sections using https://en.wikipedia.org/wiki/Natural_sort_order[nat
 Relative path imports should be in their own section, separated by a newline.
 There should be no unused imports.
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 import "modulepath:/foo.pkl"
 import "package://example.com/mypackage@1.0.0#/foo.pkl"
@@ -124,7 +124,7 @@ Within a module body, define members in this order:
 *Exception*: functions meant to be a class constructor can be next to the class declaration.
 
 .constructor.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 function MyClass(_name: String): MyClass = new { name = _name }
 
@@ -139,7 +139,7 @@ If possible, use xref:language-reference:index.adoc#triple-dot-module-uris[tripl
 instead of multiple `../`.
 
 .good.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 amends ".../ancestor.pkl"
 
@@ -147,7 +147,7 @@ import ".../ancestor2.pkl"
 ----
 
 .bad.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 amends "../../../ancestor.pkl"
 
@@ -161,7 +161,7 @@ import "../../../ancestor2.pkl"
 Object members (properties, elements, and entries) should be separated by at most one blank line.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo = "bar"
 
@@ -169,14 +169,14 @@ baz = "buz"
 ----
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo = "bar"
 baz = "buz"
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo = "bar"
 
@@ -191,7 +191,7 @@ Too many lines separate `foo` and `baz`.
 Properties that override an existing property shouldn't have doc comments nor type annotations,
 unless the type is intentionally overridden via `extends`.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 amends "myOtherModule.pkl"
 
@@ -204,7 +204,7 @@ Each property definition should have a type annotation and <<doc-comment,doc com
 Successive definitions should be separated by a blank line.
 
 .good.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 /// Denotes something.
 myFoo: String
@@ -214,7 +214,7 @@ myOtherFoo: String
 ----
 
 .bad.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 /// Denotes something.
 myFoo: String
@@ -230,13 +230,13 @@ For example, use `new {}` instead of `new Foo {}`.
 This rule does not apply when initializing a property to a subtype of the property's declared type.
 
 .good.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 myFoo: Foo = new { foo = "bar" }
 ----
 
 .good.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 open class Foo {}
 class Bar extends Foo {}
@@ -247,7 +247,7 @@ foo: Foo = new Bar {}
 This is okay because this is meaning to initialize `Bar` instead of `Foo`.
 
 .bad.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 myFoo1: Foo = new Foo { foo = "bar" } // <1>
 
@@ -268,7 +268,7 @@ Doc comments should start with a one sentence summary paragraph, followed by add
 Start new sentences on their own line.
 Add a single space after `///`.
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 /// The time allotted for eating lunch.
 ///
@@ -287,7 +287,7 @@ If a comment relates to a property definition, place it after the property's doc
 Add a single space after `//`.
 
 .good.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 /// Designates whether it is zebra party time.
 // TODO: Add constraints here?
@@ -297,7 +297,7 @@ partyTime: Boolean
 A line comment may also be placed at the end of a line, as long as the line doesn't exceed 100 characters.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 /// Designates whether it is zebra party time.
 partyTime: Boolean // TODO: Add constraints here?
@@ -308,13 +308,13 @@ partyTime: Boolean // TODO: Add constraints here?
 A single-line block comment should have a single space after `+++/*+++` and before `+++*/+++`.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 /* Let's have a zebra party */
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 /*Let's have a zebra party*/
 ----
@@ -326,13 +326,13 @@ A single-line block comment should have a single space after `+++/*+++` and befo
 Name classes in PascalCase.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class ZebraParty {}
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class zebraParty {}
 class zebraparty {}
@@ -345,13 +345,13 @@ class zebraparty {}
 Use xref:language-reference:index.adoc#custom-string-delimiters[custom string delimiters] to avoid the need for string escaping.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 myString = #"foo \ bar \ baz"#
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 myString = "foo \\ bar \\ baz"
 ----
@@ -363,13 +363,13 @@ NOTE: Sometimes, using custom string delimiters makes source code harder to read
 Prefer interpolation to string concatenation.
 
 .good.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 greeting = "Hello, \(name)"
 ----
 
 .bad.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 greeting = "Hello, " + name
 ----
@@ -393,7 +393,7 @@ Use two spaces per indentation level.
 
 Members within braces should be indented one level deeper than their parents.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo {
   bar {
@@ -407,7 +407,7 @@ foo {
 An assignee that starts after a newline should be indented.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo =
   "foo"
@@ -420,7 +420,7 @@ bar =
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo =
 "foo"
@@ -435,7 +435,7 @@ new {
 An assignee that starts on the same line should not be indented.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo = new {
   baz = "baz"
@@ -444,7 +444,7 @@ foo = new {
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo = new {
     baz = "baz"
@@ -458,7 +458,7 @@ foo = new {
 Child bodies may also be inline, and the `else` branch of `if` expressions may be inline of `if`.
 
 .good.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 if (bar)
   bar
@@ -467,33 +467,33 @@ else
 ----
 
 .good.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 if (bar) bar else foo
 ----
 
 .good.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 if (bar) bar
 else foo
 ----
 
 .good.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 let (foo = "bar")
   foo.toUpperCase()
 ----
 
 .good.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 let (foo = "bar") foo.toUpperCase()
 ----
 
 .bad.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 if (bar)
 bar
@@ -502,7 +502,7 @@ foo
 ----
 
 .bad.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 let (foo = "bar")
 foo.toUpperCase()
@@ -511,7 +511,7 @@ foo.toUpperCase()
 *Exception*: A nested `if` expression within the `else` branch should have the same indentation level as its parent, and start on the same line as the parent `else` keyword.
 
 .good.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 if (bar)
   bar
@@ -522,7 +522,7 @@ else
 ----
 
 .bad.pkl
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 if (bar)
   bar
@@ -537,7 +537,7 @@ else
 
 Indent successive multiline chained method calls.
 
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 foo()
   .bar()
@@ -550,7 +550,7 @@ foo()
 Place operators after the newline, and indent successive lines to the same level.
 
 .good.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 foo = bar
   |> baz
@@ -563,7 +563,7 @@ myNum = 1
 ----
 
 .bad.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 foo = bar |>
   baz |>
@@ -576,7 +576,7 @@ myNum = 1 +
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo = bar
 |> baz
@@ -584,7 +584,7 @@ foo = bar
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 foo = bar
   |> baz
@@ -594,7 +594,7 @@ foo = bar
 *Exception*: the minus operator must come before the newline, because otherwise it is parsed as a unary minus.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 myNum = 1 -
   2 -
@@ -603,7 +603,7 @@ myNum = 1 -
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 myNum = 1
   - 2
@@ -615,7 +615,7 @@ myNum = 1
 
 Add a space:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 amends "Foo.pkl" // <1>
 
@@ -633,7 +633,7 @@ res5 = if (foo) bar else baz // <5>
 
 NOTE: No spaces are added around the pipe symbol (`|`) in union types.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 typealias Foo = "foo"|"bar"|"baz"
 ----
@@ -648,14 +648,14 @@ Otherwise, split them into multiple lines.
 Separate each member of a single line object with a semicolon and a space.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res1 = new { bar = "bar"; baz = "baz" }
 res2 = new { 1; 2; 3; 4; 5; 6 }
 ----
 
 .bad.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 res1 = new { bar = "bar"; baz = "baz"; biz = "biz"; } // <1>
 
@@ -670,7 +670,7 @@ res2 = new { 1 2 3 4 5 6 } // <2>
 Multiline objects should have their members separated by at least one line break and at most one blank line.
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res {
   foo = "foo"
@@ -689,7 +689,7 @@ res3 {
 ----
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res {
   foo = "foo"
@@ -711,7 +711,7 @@ res3 {
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res {
   foo = "foo"
@@ -745,7 +745,7 @@ Put the opening brace on the same line.
 
 .good.pkl
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res {
   foo = "foo"
@@ -754,7 +754,7 @@ res {
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res
 {
@@ -772,7 +772,7 @@ xref:language-reference:index.adoc#for-generators[for generators] over using the
 Using for generators preserves xref:language-reference:index.adoc#late-binding[late binding].
 
 .good.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 numbers {
   1
@@ -789,7 +789,7 @@ squares {
 ----
 
 .bad.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 numbers {
   1

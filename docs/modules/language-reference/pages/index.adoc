@@ -56,7 +56,7 @@ Pkl has three forms of comments:
 Line comment::
 A code comment that starts with a double-slash (`//`) and runs until the end of the line.
 +
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 // Single-line comment
 ----
@@ -65,7 +65,7 @@ Block comment::
 A nestable multiline comment, which is typically used to comment out code.
 Starts with `+/*+` and ends with `+*/+`.
 +
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 /*
   Multiline
@@ -78,7 +78,7 @@ A user-facing comment attached to a program member.
 It starts with a triple-slash (`///`) and runs until the end of the line.
 Doc comments on consecutive lines are merged.
 +
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 /// A *bird* superstar.
 /// Unfortunately, extinct.
@@ -100,7 +100,7 @@ A value of type link:{uri-stdlib-Int}[Int] is a 64-bit signed integer.
 
 Integer literals can be written in decimal, hexadecimal, binary, or octal notation:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 num1 = 123
 num2 = 0x012AFF // <1>
@@ -114,7 +114,7 @@ num4 = 0o755 // <3>
 Integers can optionally include an underscore as a separator to improve readability.
 An underscore does not affect the integer's value.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 num1 = 1_000_000 // <1>
 num2 = 0x0134_64DE // <2>
@@ -130,7 +130,7 @@ Negative integer literals start with a minus sign, as in `-123`.
 
 Integers support the standard comparison operators:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 comparison1 = 5 == 2
 comparison2 = 5 < 2
@@ -141,7 +141,7 @@ comparison5 = 5 >= 2
 
 Integers support the following arithmetic operators:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 num1 = 5 + 2   // <1>
 num2 = 5 - 2   // <2>
@@ -164,7 +164,7 @@ Arithmetic overflows are caught and result in an error.
 To restrict an integer's range, use one of the predefined <<predefined-type-aliases,type aliases>>
 or an link:{uri-stdlib-isBetween}[isBetween] <<type-constraints,type constraint>>:
 
-[source,{pkl}]
+[source,pkl]
 ----
 clientPort: UInt16
 serverPort: Int(isBetween(0, 1023))
@@ -178,7 +178,7 @@ Float literals use decimal notation.
 They consist of an integer part, decimal point, fractional part, and exponent part.
 The integer and exponent parts are optional.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 num1 = .23
 num2 = 1.23
@@ -192,7 +192,7 @@ Negative float literals start with a minus sign, as in `-1.23`.
 
 The special float values _not a number_, _positive infinity_, and _negative infinity_ are written as:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 notANumber = NaN
 positiveInfinity = Infinity
@@ -211,14 +211,14 @@ TIP: As integers are more convenient to use than floats with a fractional part o
 
 To restrict a float to a finite value, use the link:{uri-stdlib-isFinite}[isFinite] <<type-constraints,type constraint>>:
 
-[source,{pkl}]
+[source,pkl]
 ----
 x: Float(isFinite)
 ----
 
 To restrict a float's range, use the link:{uri-stdlib-isBetween}[isBetween] type constraint:
 
-[source,{pkl}]
+[source,pkl]
 ----
 x: Float(isBetween(0, 10e6))
 ----
@@ -231,7 +231,7 @@ A value of type link:{uri-stdlib-Boolean}[Boolean] is either `true` or `false`.
 Apart from the standard logical operators, `Boolean` has
 link:{uri-stdlib-xor}[xor] and link:{uri-stdlib-implies}[implies] methods.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res1 = true && false // <1>
 res2 = true || false // <2>
@@ -252,7 +252,7 @@ A value of type link:{uri-stdlib-String}[String] is a sequence of Unicode code p
 
 String literals are enclosed in double quotes:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 "Hello, World!"
 ----
@@ -271,7 +271,7 @@ Inside a string literal, the following character escape sequences have special m
 
 Unicode escape sequences have the form `\u{<codePoint>}`, where `<codePoint>` is a hexadecimal number between 0 and 10FFFF:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 "\u{26} \u{E9} \u{1F600}" // <1>
 ----
@@ -283,7 +283,7 @@ To concatenate strings, use the `+` (plus) operator, as in `"abc" + "def" + "ghi
 
 To embed the result of expression `<expr>` in a string, use `\(<expr>)`:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 name = "Dodo"
 greeting = "Hi, \(name)!" // <1>
@@ -292,7 +292,7 @@ greeting = "Hi, \(name)!" // <1>
 
 Before a result is inserted, it is converted to a string:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 x = 42
 str = "\(x + 2) plus \(x * 2) is \(0x80)" // <1>
@@ -303,7 +303,7 @@ str = "\(x + 2) plus \(x * 2) is \(0x80)" // <1>
 
 To write a string that spans multiple lines, use a multiline string literal:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 """
 Although the Dodo is extinct,
@@ -320,14 +320,14 @@ Line breaks are included in the string and normalized to `\n`.
 The previous multiline string is equivalent to this single-line string.
 Notice that there is no leading or trailing whitespace.
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 "Although the Dodo is extinct,\nthe species will be remembered."
 ----
 
 String interpolation, character escape sequences, and Unicode escape sequences work the same as for single-line strings:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 bird = "Dodo"
 message = """
@@ -342,7 +342,7 @@ In other words, line indentation is controlled by indenting lines relative to th
 
 In the following string, lines have no leading whitespace:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 str = """
   Although the Dodo
@@ -354,7 +354,7 @@ str = """
 
 In the following string, lines are indented between three and five spaces:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 str = """
      Although the Dodo
@@ -376,14 +376,14 @@ This also affects the escape character, which changes from `\` to `\#`.
 
 All backslash and quote characters in the following string are interpreted verbatim:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 #" \\\\\ """"" "#
 ----
 
 Escape sequences and string interpolation still work, and now start with `\#`:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 bird = "Dodo"
 str = #" \\\\\ \#n \#u{12AF} \#(bird) """"" "#
@@ -393,7 +393,7 @@ More generally, string delimiters and escape characters can be customized to con
 
 In the following string, _n_ is 2. As a result, the string content is interpreted verbatim:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 ##" \\\\\ \#\#\# """"" "##
 ----
@@ -403,7 +403,7 @@ In the following string, _n_ is 2. As a result, the string content is interprete
 The `String` class offers a link:{uri-stdlib-String}[rich API].
 Here are just a few examples:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 strLength = "dodo".length // <1>
 reversedStr = "dodo".reverse() // <2>
@@ -423,7 +423,7 @@ The unit component is constrained to the units defined in link:{uri-stdlib-Durat
 
 Durations are constructed with the following `Number` properties:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 duration1 = 5.ns  // nanoseconds (smallest unit)
 duration2 = 5.us  // microseconds
@@ -440,7 +440,7 @@ The link:{uri-stdlib-Duration-value}[value] and link:{uri-stdlib-Duration-unit}[
 
 Durations support the standard comparison operators:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 comparison1 = 5.min == 3.s
 comparison2 = 5.min < 3.s
@@ -451,7 +451,7 @@ comparison5 = 5.min >= 3.s
 
 Durations support the same arithmetic operators as numbers:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res1 = 5.min + 3.s    // <1>
 res2 = 5.min - 3.s    // <2>
@@ -475,7 +475,7 @@ res9 = 5.min ** 3     // <9>
 
 The value component can be an expression:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 x = 5
 xMinutes = x.min // <1>
@@ -493,7 +493,7 @@ The unit component is constrained to the units defined in link:{uri-stdlib-DataS
 
 Data sizes with decimal units (factor 1000) are constructed with the following `Number` properties:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 datasize1 = 5.b  // bytes (smallest unit)
 datasize2 = 5.kb // kilobytes
@@ -505,7 +505,7 @@ datasize6 = 5.pb // petabytes (largest unit)
 
 Data sizes with binary units (factor 1024) are constructed with the following `Number` properties:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 datasize1 = 5.b   // bytes (smallest unit)
 datasize2 = 5.kib // kibibytes
@@ -521,7 +521,7 @@ The link:{uri-stdlib-DataSize-value}[value] and link:{uri-stdlib-DataSize-unit}[
 
 Data sizes support the standard comparison operators:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 comparison1 = 5.mb == 3.kib
 comparison2 = 5.mb < 3.kib
@@ -532,7 +532,7 @@ comparison5 = 5.mb >= 3.kib
 
 Data sizes support the same arithmetic operators as numbers:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res1 = 5.mb + 3.kib // <1>
 res2 = 5.mb - 3.kib // <2>
@@ -556,7 +556,7 @@ res9 = 5.mb ** 3    // <9>
 
 The value component can be an expression:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 x = 5
 xMegabytes = x.mb // <1>
@@ -582,7 +582,7 @@ and because they are the backbone of most data models, understanding objects is 
 
 Let's define an object with properties `name` and `extinct`:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 dodo { // <1>
   name = "Dodo" // <2>
@@ -597,7 +597,7 @@ dodo { // <1>
 
 To access an object property by name, use dot (`.`) notation:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 dodoName = dodo.name
 dodoIsExtinct = dodo.extinct
@@ -605,7 +605,7 @@ dodoIsExtinct = dodo.extinct
 
 Objects can be nested:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 dodo {
   name = "Dodo"
@@ -630,7 +630,7 @@ Fortunately, we don't have to.
 An object can be _amended_ to form a new object that only differs in selected properties.
 Here is how this looks:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 tortoise = (dodo) { // <1>
   name = "Galápagos tortoise"
@@ -660,7 +660,7 @@ Another difference is that in Pkl, object properties are late-bound. Read on to 
 
 The <<defining-objects,defining objects>> and <<amending-objects,amending objects>> sections cover two notations that are both a form of amending; called an _amends declaration_ and an _amends expression_, respectively.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 pigeon { // <1>
   name = "Turtle dove"
@@ -682,7 +682,7 @@ In practical terms, `pigeon {}` is the same as `pigeon = (super.pigeon) {}`.
 
 Amending object bodies can be chained for both an amends declaration and an amends expression.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 pigeon {
   name = "Common wood pigeon"
@@ -707,7 +707,7 @@ Let's move on to Pkl's secret sauce:
 the ability to define an object property's value in terms of another property's value, and the resulting _late binding_ effect.
 Here is an example:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 penguin {
   eggIncubation = 40.d 
@@ -720,7 +720,7 @@ adultWeightInGrams = penguin.adultWeightInGrams
 We have defined a hypothetical `penguin` object whose `adultWeightInGrams` property is defined in terms of the `eggIncubation` duration.
 Can you guess what happens when `penguin` is amended and its `eggIncubation` overridden?
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 madeUpBird = (penguin) {
   eggIncubation = 11.d
@@ -749,7 +749,7 @@ It is used extensively in Pkl code (especially in templates) and is the key to u
 
 Say we have the following object:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 dodo {
   name = "Dodo"
@@ -767,7 +767,7 @@ The recipe for transforming an object is:
 
 Equipped with this knowledge, let's try to accomplish our objective:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 dodo
   .toMap()
@@ -816,7 +816,7 @@ and new properties cannot be added when amending the module.
 A typed object is backed by a _class_.
 Let's look at an example:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird { // <1>
   name: String
@@ -841,7 +841,7 @@ How does it differ from a dynamic object?
 
 The answer is that a typed object has a fixed structure prescribed by its class, which cannot be changed when amending the object:
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 class Bird { // <1>
   name: String
@@ -869,7 +869,7 @@ name
 Class structure is also enforced when instantiating a class.
 Let's try to override property `name` with a value of the wrong type:
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 faultyPigeon2 = new Bird {
   name = 3.min
@@ -893,7 +893,7 @@ To dive deeper into this topic, continue with <<classes,Classes>>.
 ====
 When you have a `Dynamic` that has all the properties (with the right types and meeting all constraints), you can convert it to a `Typed` by using link:{uri-stdlib-Dynamic-toTyped}[`toTyped(<class>)`]:
 
-[source,{pkl}]
+[source,pkl]
 ----
 class Bird {
   name: String
@@ -917,7 +917,7 @@ pigeon = new Dynamic { // <1>
 A property with the modifier `hidden` is omitted from the rendered output and object conversions.
 Hidden properties are also ignored when evaluating equality or hashing (e.g. for `Mapping` or `Map` keys).
 
-[source,{pkl}]
+[source,pkl]
 ----
 class Bird {
   name: String
@@ -950,7 +950,7 @@ samePigeon = pigeon == favoritePigeon // <6>
 
 Invoking Pkl on this file produces the following result.
 
-[source,{pkl}]
+[source,pkl]
 ----
 pigeon {
   name = "Pigeon"
@@ -974,7 +974,7 @@ samePigeon = true
 ==== Local properties
 A property with the modifier `local` can only be referenced in the lexical scope of its definition.
 
-[source,{pkl}]
+[source,pkl]
 ----
 class Bird {
   name: String
@@ -1013,7 +1013,7 @@ Also, `import "someModule.pkl" as otherName` is effectively `const local otherNa
 A property with the `fixed` modifier cannot be assigned to or amended when defining an object of its class.
 
 .Bird.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 fixed laysEggs: Boolean = true
 
@@ -1028,7 +1028,7 @@ When amending, assigning to a `fixed` property is an error.
 Similarly, it is an error to use an <<amends-declaration,amends declaration>> on a fixed property:
 
 .invalid.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 amends "Bird.pkl"
 
@@ -1045,7 +1045,7 @@ When extending a class and overriding an existing property definition, the fixed
 If the property in the parent class is declared `fixed`, the child property must also be declared `fixed`.
 If the property in the parent class is not declared `fixed`, the child property may not add the `fixed` modifier.
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 abstract class Bird {
   fixed canFly: Boolean
@@ -1064,7 +1064,7 @@ The `fixed` modifier is useful for defining properties that are meant to be deri
 In the following snippet, the property `result` is not meant to be assigned to, because it is derived
 from other properties.
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 class Bird {
   wingspan: Int
@@ -1081,7 +1081,7 @@ Note that it is possible to define a `fixed` property without a value, for one o
 1. The type has a default value that makes an explicit default redundant.
 2. The property is meant to be overridden by a child class.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 abstract class Bird {
   fixed species: String // <1>
@@ -1101,7 +1101,7 @@ A property with the `const` modifier behaves like the <<fixed-properties,`fixed`
 with the additional rule that it cannot reference non-const properties or methods.
 
 .Bird.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 const laysEggs: Boolean = true
 
@@ -1115,7 +1115,7 @@ const examples: Listing<String> = new {
 Referencing any non-const property or method is an error.
 
 .invalid.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 pigeonName: String = "Pigeon"
 
@@ -1137,7 +1137,7 @@ const bird: Bird = new {
 It is okay to reference another value _within_ the same const property.
 
 .valid.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird {
   lifespan: Int
@@ -1170,7 +1170,7 @@ In these following scenarios, any reference to a property or method of its enclo
 * Typealiased constrained type
 
 .invalid2.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 pigeonName: String = "Pigeon"
 
@@ -1261,7 +1261,7 @@ Note that listings can be converted to lists when the need arises.
 Listings have a literal syntax that is similar to that of objects.
 Here is a listing with two elements:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Listing { // <1>
   new { // <2>
@@ -1283,7 +1283,7 @@ birds = new Listing { // <1>
 
 To access an element by index, use the `[]` (subscript) operator:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 firstBirdName = birds[0].name  // <1>
 secondBirdDiet = birds[1].diet // <2>
@@ -1293,7 +1293,7 @@ secondBirdDiet = birds[1].diet // <2>
 
 Listings can contain arbitrary types of elements:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 listing = new Listing {
   "Pigeon" // <1>
@@ -1309,7 +1309,7 @@ listing = new Listing {
 
 Listings can have `local` properties:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 listing = new Listing {
   local pigeon = "Pigeon" // <1>
@@ -1327,7 +1327,7 @@ listing = new Listing {
 
 Let's say we have the following listing:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Listing {
   new {
@@ -1343,7 +1343,7 @@ birds = new Listing {
 
 To add, override, or amend elements of this listing, amend the listing itself:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds2 = (birds) { // <1>
   new { // <2>
@@ -1369,7 +1369,7 @@ birds2 = (birds) { // <1>
 A listing element can be defined in terms of another element.
 To reference the element at index `<index>`, use `this[<index>]`:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Listing {
   new { // <1>
@@ -1386,7 +1386,7 @@ birds = new Listing {
 
 Listing elements are late-bound:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 newBirds = (birds) { // <1>
   [0] {
@@ -1403,7 +1403,7 @@ secondBirdDiet = newBirds[1].diet // <2>
 
 Say we have the following listing:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Listing {
   new {
@@ -1430,7 +1430,7 @@ Because most value renderers treat lists the same as listings, it is often not n
 
 Equipped with this knowledge, let's try to accomplish our objective:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 reversedbirds = birds
   .toList()
@@ -1454,7 +1454,7 @@ To make these boundaries clear, transitioning between _lazy_ and _eager_ data ty
 
 Listings can have a _default element_:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Listing {
   default { // <1>
@@ -1482,7 +1482,7 @@ If, as in our example, no type annotation is provided or inherited, the default 
 Like regular listing elements, the default element is late-bound.
 As a result, defaults can be changed retroactively:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds2 = (birds) {
   default {
@@ -1495,7 +1495,7 @@ birds2 = (birds) {
 Because both of ``birds``'s elements amend the default element, changing the default element also changes them.
 An equivalent literal definition of `birds2` would look as follows:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds2 = new Listing {
   new {
@@ -1520,7 +1520,7 @@ If you are interested in the technical underpinnings of default elements (and no
 
 To declare the type of a property that is intended to hold a listing, use:
 
-[source,{pkl}]
+[source,pkl]
 ----
 x: Listing<ElementType>
 ----
@@ -1535,7 +1535,7 @@ This declaration has the following effects:
 
 Here is an example:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird {
   name: String
@@ -1549,7 +1549,7 @@ Because the default value for type `Bird` is `new Bird {}`, that value becomes t
 
 Let's go ahead and populate `birds`:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds {
   new {
@@ -1571,7 +1571,7 @@ it is not necessary to state the type of each list element
 
 To constrain a listing to distinct elements, use ``Listing``'s link:{uri-stdlib-Listing-isDistinct}[isDistinct] property:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird {
   name: String
@@ -1585,7 +1585,7 @@ This is as close as Pkl's late-bound data types (objects, listings, and mappings
 
 To demand distinct names instead of distinct `Bird` objects, use link:{uri-stdlib-Listing-isDistinctBy}[isDistinctBy()]:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds: Listing<Bird>(isDistinctBy((it) -> it.name))
 ----
@@ -1625,7 +1625,7 @@ Note that mappings can be converted to maps when the need arises.
 Mappings have the same literal syntax as objects, except that keys enclosed in `[]` take the place of property names.
 Here is a mapping with two entries:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Mapping { // <1>
   ["Pigeon"] { // <2>
@@ -1646,7 +1646,7 @@ birds = new Mapping { // <1>
 
 To access a value by key, use the `[]` (subscript) operator:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 pigeon = birds["Pigeon"]
 parrot = birds["Parrot"]
@@ -1654,7 +1654,7 @@ parrot = birds["Parrot"]
 
 Mappings can contain arbitrary types of values:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 mapping = new Mapping {
   ["number"] = 42
@@ -1670,7 +1670,7 @@ mapping = new Mapping {
 
 Although string keys are most common, mappings can contain arbitrary types of keys:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 mapping = new Mapping {
   [3.min] = 42
@@ -1680,7 +1680,7 @@ mapping = new Mapping {
 
 Keys can be computed:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 mapping = new Mapping {
   ["Pigeon".reverse()] = 42
@@ -1689,7 +1689,7 @@ mapping = new Mapping {
 
 Mappings can have `local` properties:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 mapping = new Mapping {
   local parrot = "Parrot" // <1>
@@ -1708,7 +1708,7 @@ mapping = new Mapping {
 
 Let's say we have the following mapping:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Mapping {
   ["Pigeon"] {
@@ -1724,7 +1724,7 @@ birds = new Mapping {
 
 To add, override, or amend entries of this mapping, amend the mapping:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds2 = (birds) { // <1>
   ["Barn owl"] { // <2>
@@ -1750,7 +1750,7 @@ birds2 = (birds) { // <1>
 A mapping entry's value can be defined in terms of another entry's value.
 To reference the value with key `<key>`, use `this[<key>]`:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Mapping {
   ["Pigeon"] { // <1>
@@ -1767,7 +1767,7 @@ birds = new Mapping {
 
 Mapping values are late-bound:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds2 = (birds) { // <1>
   ["Pigeon"] {
@@ -1784,7 +1784,7 @@ parrotDiet = birds2["Parrot"].diet // <2>
 
 Say we have the following mapping:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Mapping {
   ["Pigeon"] {
@@ -1810,7 +1810,7 @@ As most value renderers treat maps the same as mappings, it is often not necessa
 
 Equipped with this knowledge, let's try to accomplish our objective:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 result = birds
   .toMap()
@@ -1835,7 +1835,7 @@ To make these boundaries clear, transitioning between _lazy_ and _eager_ data ty
 
 Mappings can have a _default value_:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Mapping {
   default { // <1>
@@ -1862,7 +1862,7 @@ If, as in our example, no type annotation is provided or inherited, the default 
 Like regular mapping values, the default value is late-bound.
 As a result, defaults can be changed retroactively:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds2 = (birds) {
   default {
@@ -1875,7 +1875,7 @@ birds2 = (birds) {
 Because both of ``birds``'s mapping values amend the default value, changing the default value also changes them.
 An equivalent literal definition of `birds2` would look as follows:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds2 = new Mapping {
   ["Pigeon"] {
@@ -1898,7 +1898,7 @@ If you are interested in the technical underpinnings of default values, continue
 
 To declare the type of a property that is intended to hold a mapping, use:
 
-[source,{pkl}]
+[source,pkl]
 ----
 x: Mapping<KeyType, ValueType>
 ----
@@ -1914,7 +1914,7 @@ This declaration has the following effects:
 
 Here is an example:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird {
   lifespan: Int
@@ -1927,7 +1927,7 @@ Because the default value for type `Bird` is `new Bird {}`, that value becomes t
 
 Let's go ahead and populate `birds`:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds {
   ["Pigeon"] {
@@ -1952,7 +1952,7 @@ At the top of the hierarchy sits class link:{uri-stdlib-Any}[Any]; at the bottom
 Classes contain properties and methods, which can be `local` to their declaring scope.
 Properties can also be `hidden` from rendering.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird {
   name: String
@@ -1975,7 +1975,7 @@ pigeonClass = pigeon.getClass()
 
 Declaration of new class instances will fail when property names are misspelled: 
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 // Detects the spelling mistake
 parrot = new Bird {
@@ -1987,7 +1987,7 @@ parrot = new Bird {
 
 Pkl supports single inheritance with a Java(Script)-like syntax.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 abstract class Bird {
   name: String
@@ -2012,7 +2012,7 @@ Submodules and subclasses can override them.
 
 Like Java and most other object-oriented languages, Pkl uses _single dispatch_ -- methods are dynamically dispatched based on the receiver's runtime type.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird {
   name: String
@@ -2058,7 +2058,7 @@ The precise runtime type of a module is a subclass of `Module` containing the mo
 
 Like class members, module members may have type annotations, which are validated at runtime:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 timeout: Duration(isPositive) = 5.ms
 
@@ -2075,7 +2075,7 @@ In analogy to classes, modules can be <<module-extend,extended>> to add addition
 
 Modules may declare their name by way of a _module clause_, which consists of the keyword `module` followed by a qualified name:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 /// My bird module.
 module com.animals.Birds
@@ -2224,7 +2224,7 @@ does not resolve to itself.
 
 Recall how an object is amended:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 pigeon {
   name = "Pigeon"
@@ -2241,14 +2241,14 @@ parrot = (pigeon) { // <1>
 Amending a module works in the same way, except that the syntax differs slightly:
 
 .pigeon.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 name = "Pigeon"
 diet = "Seeds"
 ----
 
 .parrot.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 amends "pigeon.pkl" // <1>
 
@@ -2262,7 +2262,7 @@ A module is amended by way of an _amends clause_, which consists of the keyword 
 An amends clause comes after the module clause (if present) and before any import clauses:
 
 .parrot.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 module parrot
 
@@ -2295,7 +2295,7 @@ Template modules are often provided by third parties and served over HTTPS.
 Recall how a class is extended:
 
 .PigeonAndParrot.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 open class Pigeon {   // <1>
   name = "Pigeon"
@@ -2320,7 +2320,7 @@ class Parrot extends Pigeon {   // <2>
 Extending a module works in the same way, except that the syntax differs slightly:
 
 .pigeon.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 open module pigeon   // <1>
 
@@ -2330,7 +2330,7 @@ diet = "Seeds"
 <1> Module `pigeon` is declared as `open` for extension.
 
 .parrot.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 extends "pigeon.pkl"    // <1>
 
@@ -2351,7 +2351,7 @@ The extends clause comes after the module clause (if present) and before any imp
 Only modules declared as `open` can be extended.
 
 .parrot.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 module parrot
 
@@ -2384,7 +2384,7 @@ An import clause consists of the keyword `import` followed by the <<Module URIs,
 An import clause comes after module, amends and extends clauses (if present), and before the module body:
 
 .parrot.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 module parrot
 
@@ -2409,7 +2409,7 @@ The name of this property, called _import name_, is constructed from the module 
 Here are some examples:
 
 .Local file import
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 import "modules/pigeon.pkl" // relative to current module
 
@@ -2417,7 +2417,7 @@ name = pigeon.name
 ----
 
 .HTTPS import
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 import "https://mycompany.com/modules/pigeon.pkl"
 
@@ -2425,7 +2425,7 @@ name = pigeon.name
 ----
 
 .Standard library import
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 import "pkl:math"
 
@@ -2433,7 +2433,7 @@ pi = math.Pi
 ----
 
 .Package import
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 import "package://example.com/birds@1.0.0#/sparrow.pkl"
 
@@ -2450,7 +2450,7 @@ Occasionally, the default import name for a module may not be convenient or appr
 In such a case, a different import name can be chosen:
 
 .parrot.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 import "pigeon.pkl" as piggy
 
@@ -2479,7 +2479,7 @@ An import name should make sense on its own and when used in qualified member na
 
 An import expression consists of the keyword `import`, followed by a <<Module URIs,module URI>> wrapped in parentheses:
 
-[source,{pkl}]
+[source,pkl]
 ----
 module birds
 
@@ -2501,7 +2501,7 @@ Globbed imports can be expressed as either a clause or as an expression.
 When expressed as a clause, they follow the same naming rules as a normal <<import-clause,import clause>>: they introduce a local property equal to the last path segment without the `.pkl` extension.
 A globbed import clause cannot be used as a type.
 
-[source,{pkl}]
+[source,pkl]
 ----
 import* "birds/*.pkl" as allBirds // <1>
 import* "reptiles/*.pkl" <2>
@@ -2527,13 +2527,13 @@ Assuming that a file system contains these files:
 The following two snippets are logically identical:
 
 .index.pkl
-[source,{pkl}]
+[source,pkl]
 ----
 birds = import*("birds/*.pkl")
 ----
 
 .index.pkl
-[source,{pkl}]
+[source,pkl]
 ----
 birds = new Mapping {
   ["birds/pigeon.pkl"] = import("birds/pigeon.pkl")
@@ -2602,7 +2602,7 @@ There are two ways to change this behavior:
 
 Given the following module:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 .config.pkl
 ----
 a = 10
@@ -2613,7 +2613,7 @@ b {
 
 `pkl eval config.pkl`, which is shorthand for `pkl eval --format pcf config.pkl`, renders the module as Pcf:
 
-[source,{pkl}]
+[source,pkl]
 ----
 a = 10
 b {
@@ -2641,7 +2641,7 @@ Modules have an link:{uri-stdlib-baseModule}/Module#output[output] property that
 
 To control *what* the output is, set the link:{uri-stdlib-baseModule}/ModuleOutput#value[output.value] property:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 a = 10
 b {
@@ -2654,14 +2654,14 @@ output {
 
 This produces:
 
-[source,{pkl}]
+[source,pkl]
 ----
 c = 20
 ----
 
 To control _how_ the output is rendered, set the link:{uri-stdlib-baseModule}/ModuleOutput#renderer[output.renderer] property:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 a = 10
 b {
@@ -2691,7 +2691,7 @@ The standard library renderers can be configured with _value converters_, which 
 For example, since YAML does not have a standard way to represent data sizes, a plain `YamlRenderer` cannot render `DataSize` values.
 However, we can teach it to:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 quota {
   memory = 100.mb
@@ -2718,7 +2718,7 @@ quota:
 
 In addition to _class_-based converters, renderers also support _path_-based converters:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 output {
   renderer = new YamlRenderer {
@@ -2735,7 +2735,7 @@ For more on path-based converters, see {uri-stdlib-PcfRenderer-converters}[PcfRe
 Sometimes it is useful to directly compute the final module output, bypassing `output.value` and `output.converters`.
 To do so, set the link:{uri-stdlib-baseModule}/ModuleOutput#text[output.text] property to a String value:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 output {
   // defaults to `renderer.render(value)`
@@ -2762,7 +2762,7 @@ and specifying the xref:pkl-cli:index.adoc#multiple-file-output-path[`--multiple
 Here is an example that produces a JSON and a YAML file:
 
 .birds.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 pigeon {
   name = "Pigeon"
@@ -2819,7 +2819,7 @@ With this, a module can aggregate the outputs of multiple other modules.
 Here is an example:
 
 .pigeon.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 name = "Pigeon"
 diet = "Seeds"
@@ -2829,7 +2829,7 @@ output {
 ----
 
 .parrot.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 name = "Parrot"
 diet = "Seeds"
@@ -2839,7 +2839,7 @@ output {
 ----
 
 .birds.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 import "pigeon.pkl"
 import "parrot.pkl"
@@ -2858,7 +2858,7 @@ When aggregating module outputs,
 the appropriate file extensions can be obtained programmatically:
 
 .birds.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 import "pigeon.pkl"
 import "parrot.pkl"
@@ -2883,7 +2883,7 @@ The keyword `null` indicates the absence of a value.
 The `!!` (non-null) operator asserts that its operand is non-null.
 Here are some examples:
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 name = "Pigeon"
 nameNonNull = name!!  // <1>
@@ -2898,7 +2898,7 @@ name2NonNull = name2!! // <2>
 
 The `??` (null coalescing) operator fills in a default for a `null` value.
 
-[source,{pkl-expr}]
+[source,pkl expression]
 ----
 value ?? default
 ----
@@ -2906,7 +2906,7 @@ value ?? default
 The above expression evaluates to `value` if `value` is non-null, and to `default` otherwise.
 Here are some examples:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 name = "Pigeon"
 nameOrParrot = name ?? "Parrot"  // <1>
@@ -2937,7 +2937,7 @@ depending on whether `pigeon` was ever amended with a non-null value.
 
 The `?.` (null propagation) operator provides null-safe access to a member whose receiver may be `null`.
 
-[source,{pkl-expr}]
+[source,pkl expression]
 ----
 value?.member
 ----
@@ -2945,7 +2945,7 @@ value?.member
 The above expression evaluates to `value.member` if `value` is non-null, and to `null` otherwise.
 Here are some examples:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 name = "Pigeon"
 nameLength = name?.length          // <1>
@@ -2962,7 +2962,7 @@ name2Upper = name2?.toUpperCase()  // <4>
 
 The `?.` operator is often combined with `??`:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 name = null
 nameLength = name?.length ?? 0 // <1>
@@ -2973,7 +2973,7 @@ nameLength = name?.length ?? 0 // <1>
 
 The link:{uri-stdlib-ifNonNull}[ifNonNull()] method is a generalization of the <<null-propagation,null propagation>> operator.
 
-[source%parsed,{pkl-expr}]
+[source%parsed,pkl expression]
 ----
 name.ifNonNull((it) -> doSomethingWith(it))
 ----
@@ -2981,7 +2981,7 @@ name.ifNonNull((it) -> doSomethingWith(it))
 The above expression evaluates to `doSomethingWith(name)` if `name` is non-null, and to `null` otherwise.
 Here are some examples:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 name = "Pigeon"
 nameWithTitle = name.ifNonNull((it) -> "Dr." + it)  // <1>
@@ -2996,7 +2996,7 @@ name2WithTitle = name2.ifNonNull((it) -> "Dr." + it) // <2>
 
 To express that a property can have any type except `Null`, use the `NonNull` <<type-aliases,type alias>>:
 
-[source,{pkl}]
+[source,pkl]
 ----
 x: NonNull
 ----
@@ -3007,7 +3007,7 @@ x: NonNull
 An `if` expression serves the same role as the ternary operator (`? :`) in other languages.
 Every `if` expression must have an `else` branch.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 num = if (2 + 2 == 5) 1984 else 42 // <1>
 ----
@@ -3020,7 +3020,7 @@ Pkl programs can read external resources, such as environment variables or text 
 
 To read a resource, use a `read` expression:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 path = read("env:PATH")
 ----
@@ -3052,7 +3052,7 @@ If a resource does not exist or cannot be read, `read()` fails with an error.
 To recover from the absence of a resource, use `read?()` instead,
 which returns `null` for absent resources:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 port = read?("env:PORT")?.toInt() ?? 1234
 ----
@@ -3079,13 +3079,13 @@ Assuming that a file system contains these files:
 The following two snippets are logically identical:
 
 .index.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 birdFiles = read*("birds/*.pkl")
 ----
 
 .index.pkl
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 birdFiles = new Mapping {
   ["birds/pigeon.pkl"] = read("birds/pigeon.pkl")
@@ -3143,7 +3143,7 @@ For example, the allowlist `file:,https:` grants access to any resource whose UR
 By design, errors are fatal in Pkl -- there is no way to recover from them.
 To raise an error, use a `throw` expression:
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 myValue = throw("You won't be able to recover from this one!") // <1>
 ----
@@ -3158,7 +3158,7 @@ In embedded mode, a link:{uri-pkl-core-PklException}[PklException] is thrown.
 When debugging Pkl code, it can be useful to print the value of an expression.
 To do so, use a `trace` expression:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 num1 = 42
 num2 = 16
@@ -3220,7 +3220,7 @@ Similarly, when `Listing` and `Mapping` types are declared with explicit type ar
 When `Listing` and `Mapping` types are declared without type arguments, their `default` property amends an empty `Dynamic` object.
 Some types, including `Pair` and primitives like `String`, `Number`, and `Boolean` have no default value; attempting to render such a property results in the error "Tried to read property `<name>` but its value is undefined".
 
-[source,{pkl}]
+[source,pkl]
 ----
 class Bird {
   name: String = "polly"
@@ -3239,7 +3239,7 @@ birdMapping: Mapping<String, Bird> // <3>
 Instantiating an object with `new <type>` results in a value that amends the specified type's default value.
 Notably, creating a `Listing` element or assigning a `Mapping` entry value with an explicitly typed `new` ignores the object's `default` value.
 
-[source,{pkl}]
+[source,pkl]
 ----
 class Bird {
   /// The name of the bird
@@ -3290,7 +3290,7 @@ If there is no type associated with the property, an empty `Dynamic` object is a
 The type annotation of a <<methods,method>> parameter is not used for inference.
 In this case, the argument's type should be specified explicitly.
 
-[source,{pkl}]
+[source,pkl]
 ----
 class Bird {
   name: String
@@ -3377,7 +3377,7 @@ A `let` expression is evaluated as follows:
 
 Here is an example:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birdDiets =
   let (diets = List("Seeds", "Berries", "Mice"))
@@ -3392,7 +3392,7 @@ birdDiets =
 
 `let` expressions can have type annotations:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birdDiets = 
   let (diets: List<String> = List("Seeds", "Berries", "Mice"))
@@ -3402,7 +3402,7 @@ birdDiets =
 
 `let` expressions can be stacked:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birdDiets = 
   let (birds = List("Pigeon", "Barn owl", "Parrot"))
@@ -3418,7 +3418,7 @@ To test if a value conforms to a type, use the _is_ operator.
 
 All the following tests hold:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 test1 = 42 is Int
 test2 = 42 is Number
@@ -3443,7 +3443,7 @@ test10 = derived is Any
 
 A value can be tested against any type, not just a class:
 
-[source,{pkl}]
+[source,pkl]
 ----
 test1 = email is String(contains("@")) // <1>
 test2 = map is Map<Int, Base> // <2>
@@ -3459,7 +3459,7 @@ test3 = name is "Pigeon"|"Barn owl"|"Parrot" // <3>
 The _as_ (type cast) operator performs a runtime type check on its operand.
 If the type check succeeds, the operand is returned as-is; otherwise, an error is thrown.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds {
   new { name = "Pigeon" }
@@ -3490,7 +3490,7 @@ Note that listings can be converted to lists when the need arises.
 
 Lists are constructed with the `List()` methodfootnote:soft-keyword[Strictly speaking, `List`, `Set`, and `Map` are currently soft keywords. The goal is to eventually turn them into regular standard library methods.]:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 list1 = List() // <1>
 list2 = List(1, 2, 3) // <2>
@@ -3502,14 +3502,14 @@ list3 = List(1, "x", 5.min, List(1, 2, 3)) // <3>
 
 To concatenate lists, use the `+` operator:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 List(1, 2) + List(3, 4) + List(5)
 ----
 
 To access a list element by index, use the `[]` (subscript) operator:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 list = List(1, 2, 3, 4)
 listElement = list[2] // <1>
@@ -3519,7 +3519,7 @@ listElement = list[2] // <1>
 Class `List` offers a link:{uri-stdlib-List}[rich API].
 Here are just a few examples:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 list = List(1, 2, 3, 4)
 res1 = list.contains(3) // <1>
@@ -3545,7 +3545,7 @@ A set's elements are eagerly evaluated.
 
 Sets are constructed with the `Set()` methodfootnote:soft-keyword[]:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res1 = Set() // <1>
 res2 = Set(1, 2, 3) // <2>
@@ -3559,7 +3559,7 @@ res4 = Set(1, "x", 5.min, List(1, 2, 3)) // <4>
 
 To compute the union of sets, use the `+` operator:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 Set(1, 2) + Set(2, 3) + Set(5, 3) // <1>
 ----
@@ -3568,7 +3568,7 @@ Set(1, 2) + Set(2, 3) + Set(5, 3) // <1>
 Class `Set` offers a link:{uri-stdlib-Set}[rich API].
 Here are just a few examples:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 set = Set(1, 2, 3, 4)
 res1 = set.contains(3) // <1>
@@ -3602,7 +3602,7 @@ Templates and schemas should almost always use mappings instead of maps.
 
 Maps are constructed by passing alternating keys and values to the `Map()` methodfootnote:soft-keyword[]:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 map1 = Map() // <1>
 map2 = Map(1, "one", 2, "two", 3, "three") // <2>
@@ -3614,14 +3614,14 @@ map3 = Map(1, "x", 2, 5.min, 3, Map(1, 2)) // <3>
 
 Any Pkl value can be used as a map key:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 Map(new Dynamic { name = "Pigeon" }, 10.gb)
 ----
 
 To merge maps, use the `+` operator:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 combinedMaps = Map(1, "one") + Map(2, "two", 1, "three") + Map(4, "four") // <1>
 ----
@@ -3629,7 +3629,7 @@ combinedMaps = Map(1, "one") + Map(2, "two", 1, "three") + Map(4, "four") // <1>
 
 To access a value by key, use the `[]` (subscript) operator:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 map = Map("Pigeon", 5.gb, "Parrot", 10.gb)
 parrotValue = map["Parrot"] // <1>
@@ -3639,7 +3639,7 @@ parrotValue = map["Parrot"] // <1>
 Class `Map` offers a link:{uri-stdlib-Map}[rich API].
 Here are just a few examples:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 map = Map("Pigeon", 5.gb, "Parrot", 10.gb)
 res1 = map.containsKey("Parrot") // <1>
@@ -3661,7 +3661,7 @@ A value of type link:{uri-stdlib-Regex}[Regex] is a regular expression with the 
 
 Regular expressions are constructed with the link:{uri-stdlib-Regex-method}[Regex()] method:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 emailRegex = Regex(#"([\w\.]+)@([\w\.]+)"#)
 ----
@@ -3672,7 +3672,7 @@ As a consequence, the regular expression's backslash escape character no longer 
 
 To test if a string fully matches a regular expression, use link:{uri-stdlib-matches}[String.matches()]:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 "pigeon@example.com".matches(emailRegex)
 ----
@@ -3680,7 +3680,7 @@ To test if a string fully matches a regular expression, use link:{uri-stdlib-mat
 Many `String` methods accept either a `String` or `Regex` argument.
 Here is an example:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 res1 = "Pigeon<pigeon@example.com>".contains("pigeon@example.com")
 res2 = "Pigeon<pigeon@example.com>".contains(emailRegex)
@@ -3689,7 +3689,7 @@ res2 = "Pigeon<pigeon@example.com>".contains(emailRegex)
 To find all matches of a regex in a string, use link:{uri-stdlib-Regex-match}[Regex.findMatchesIn()].
 The result is a list of link:{uri-stdlib-RegexMatch}[RegexMatch] objects containing details about each match:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 matches = emailRegex.findMatchesIn("pigeon@example.com / falcon@example.com / parrot@example.com")
 list1 = matches.drop(1).map((it) -> it.start) // <1>
@@ -3705,14 +3705,14 @@ list3 = matches.drop(1).map((it) -> it.groups[1].value) // <3>
 
 A _type alias_ introduces a new name for a (potentially complicated) type:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 typealias EmailAddress = String(matches(Regex(#".+@.+"#)))
 ----
 
 Once a type alias has been defined, it can be used in type annotations:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 email: EmailAddress = "pigeon@example.com"
 
@@ -3721,7 +3721,7 @@ emailList: List<EmailAddress> = List("pigeon@example.com", "parrot@example.com")
 
 New type aliases can be defined in terms of existing ones:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 typealias EmailList = List<EmailAddress>
 
@@ -3730,7 +3730,7 @@ emailList: EmailList = List("pigeon@example.com", "parrot@example.com")
 
 Type aliases can have type parameters:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 typealias StringMap<Value> = Map<String, Value>
 
@@ -3766,7 +3766,7 @@ WARNING: Note that `UInt` has the same maximum value as `Int`, half of what woul
 
 The main purpose of the provided integer aliases is to enforce the range of an integer:
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 port: UInt16 = -1
 ----
@@ -3781,7 +3781,7 @@ Value: -1
 
 To restrict a number to a custom range, use the link:{uri-stdlib-isBetween}[isBetween] method:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 port: Int(isBetween(0, 1023)) = 443
 ----
@@ -3818,7 +3818,7 @@ Type annotations serve the following purposes:
 
 Any class can be used as a type:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 class Bird {
   name: String // <1>
@@ -3832,14 +3832,14 @@ bird: Bird // <2>
 
 Any module import can be used as type:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 .bird.pkl
 ----
 name: String
 lifespan: Int
 ----
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 .birds.pkl
 ----
 import "bird.pkl"
@@ -3851,7 +3851,7 @@ parrot: bird // <1>
 
 As a special case, the `module` keyword denotes the _enclosing_ module's type:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 .bird.pkl
 ----
 name: String
@@ -3859,7 +3859,7 @@ lifespan: Int
 friends: Listing<module>
 ----
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 .pigeon.pkl
 ----
 amends "bird.pkl"
@@ -3876,7 +3876,7 @@ friends {
 
 Any <<type-aliases,type alias>> can be used as a type:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 typealias EmailAddress = String(contains("@"))
 
@@ -3892,7 +3892,7 @@ emailList: List<EmailAddress> // <2>
 Class types such as `Bird` (see above) do not admit `null` values.
 To turn them into _nullable types_, append a question mark (`?`):
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 bird: Bird = null   // <1>
 bird2: Bird? = null // <2>
@@ -3927,7 +3927,7 @@ The following class types are _generic types_:
 
 A generic type has constituent types written in angle brackets (`<>`):
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 pair: Pair<String, Bird>    // <1>
 coll: Collection<Bird>      // <2>
@@ -3946,7 +3946,7 @@ mapping: Mapping<String, Bird> // <6>
 
 Omitting the constituent types is equivalent to declaring them as `unknown`:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 pair: Pair       // equivalent to `Pair<unknown, unknown>`
 coll: Collection // equivalent to `Collection<unknown>`
@@ -3965,7 +3965,7 @@ it backs off and trusts the user that they know what they are doing.
 
 A value of type `A | B`, read "A or B", is either a value of type `A` or a value of type `B`.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird { name: String }
 
@@ -3975,13 +3975,13 @@ bird2: String|Bird = new Bird { name = "Pigeon" }
 
 More complex union types can be formed:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 foo: List<Boolean|Number|String>|Bird
 ----
 
 Union types have no implicit default values, but an explicit type can be chosen using a `*` marker:
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 foo: "a"|"b"       // undefined. Will throw an error if not amended
 bar: "a"|*"b"      // default value will be taken from type "b"
@@ -3996,7 +3996,7 @@ Union types often come in handy when writing schemas for legacy JSON or YAML fil
 
 A string literal type admits a single string value:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 diet: "Seeds"
 ----
@@ -4004,14 +4004,14 @@ diet: "Seeds"
 While occasionally useful on their own,
 string literal types are often combined with <<Union Types>> to form enumerated types:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 diet: "Seeds"|"Berries"|"Insects"
 ----
 
 To reuse an enumerated type, introduce a type alias:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 typealias Diet = "Seeds"|"Berries"|"Insects"
 diet: Diet
@@ -4031,7 +4031,7 @@ Being assignment-compatible with every other type may sound too good to be true,
 Despite being a lonely type, `nothing` has practical applications.
 For example, it is used in the standard library's `TODO()` method:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 function TODO(): nothing = throw("TODO")
 ----
@@ -4052,7 +4052,7 @@ it backs off and trusts the code's author to know what they are doing -- for exa
 In the spirit of link:{uri-progressive-disclosure}[progressive disclosure], type annotations are optional in Pkl.
 Omitting a type annotation is equivalent to specifying the type `unknown`:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 lifespan = 42 // <1>
 map: Map // <2>
@@ -4068,7 +4068,7 @@ function say(name) = name // <3>
 
 Type-annotated properties have implicit "empty" default values depending on their type:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird
 
@@ -4115,7 +4115,7 @@ Properties of the following types do not have implicit default values:
 
 Accessing a property that neither has an (implicit or explicit) default value nor has been overridden throws an error:
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 name: String
 ----
@@ -4127,7 +4127,7 @@ A type may be followed by a comma-separated list of _type constraints_ enclosed 
 A type constraint is a boolean expression that must hold for the annotated element.
 Type constraints enable advanced runtime validation that goes beyond the capabilities of static type checking.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird {
   name: String(length >= 3)     //  <1>
@@ -4145,7 +4145,7 @@ pigeon: Bird = new {
 
 In the following example, we define a `Bird` with a name of only two characters.
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 pigeon: Bird = new {
   // fails the constraint because [name] is less than 3 characters
@@ -4157,7 +4157,7 @@ Boolean expressions are convenient for ad-hoc type constraints.
 Alternatively, type constraints can be given as lambda expressions accepting a single argument, namely the value to be validated.
 This allows for the abstraction and reuse of type constraints.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Project {
   local emailAddress = (str) -> str.matches(Regex(#".+@.+"#))
@@ -4169,7 +4169,7 @@ project: Project = new {
 }
 ----
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 project: Project = new {
   // fails the constraint because `"projectPigeon-example.com"` doesn't match the regular expression.
@@ -4181,7 +4181,7 @@ project: Project = new {
 
 A composite type can have type constraints for the overall type, its constituent types, or both.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Project {
   local emailAddress = (str) -> str.matches(Regex(#".+@.+"#))
@@ -4219,7 +4219,7 @@ Anonymous functions have their own literal syntax:
 
 Here is an example:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 (n) -> n * 3
 ----
@@ -4234,21 +4234,21 @@ They cannot have more than five parameters.
 
 To invoke an anonymous function, call its link:{uri-stdlib-Function1-apply}[apply] method:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 ((n) -> n * 3).apply(4) // 12
 ----
 
 Many standard library methods accept anonymous functions:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 List(1, 2, 3).map((n) -> n * 3) // List(3, 6, 9)
 ----
 
 Anonymous functions can be assigned to properties, thereby giving them a name:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 add = (a, b) -> a + b
 added = add.apply(2, 3)
@@ -4258,7 +4258,7 @@ added = add.apply(2, 3)
 ====
 If an anonymous function is not intended to be passed as value, it is customary to declare a method instead:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 function add(a, b) = a + b
 added = add(2, 3)
@@ -4267,7 +4267,7 @@ added = add(2, 3)
 
 An anonymous function's parameters can have type annotations:
 
-[source%tested,{pkl-expr}]
+[source%tested,pkl expression]
 ----
 (a: Number, b: Number) -> a + b
 ----
@@ -4276,7 +4276,7 @@ Applying this function to arguments not of type `Number` results in an error.
 
 Anonymous functions are _closures_: They can access members defined in a lexically enclosing scope, even after leaving that scope:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 a = 42
 addToA = (b: Number) -> a + b
@@ -4287,7 +4287,7 @@ Single-parameter anonymous functions can also be applied with the `|>` (pipe) op
 which expects a function argument to the left and an anonymous function to the right.
 The pipe operator works especially well for chaining multiple functions:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 mul3 = (n) -> n * 3
 add2 = (n) -> n + 2
@@ -4301,7 +4301,7 @@ num = 4
 
 Like methods, anonymous functions can be recursive:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 factor = (n: Number(isPositive)) -> if (n < 2) n else n * factor.apply(n - 1)
 num = factor.apply(5) // <1>
@@ -4315,7 +4315,7 @@ A mixin is an anonymous function used to apply the same modification to differen
 
 Even though mixins are regular functions, they are best created with object syntax:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 withDiet = new Mixin {
   diet = "Seeds"
@@ -4324,7 +4324,7 @@ withDiet = new Mixin {
 
 Mixins can optionally specify which type of object they apply to:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Bird { diet: String }
 
@@ -4335,7 +4335,7 @@ withDietTyped = new Mixin<Bird> {
 
 For properties with type annotation, the shorthand `new { ... }` syntax can be used:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 withDietTyped: Mixin<Bird> = new {
   diet = "Seeds"
@@ -4344,7 +4344,7 @@ withDietTyped: Mixin<Bird> = new {
 
 To apply a mixin, use the `|>` (pipe) operator:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 pigeon {
   name = "Pigeon"
@@ -4358,7 +4358,7 @@ barnOwlWithDiet = barnOwl |> withDiet
 ----
 
 `withDiet` can be generalized by turning it into a factory method for mixins:
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 function withDiet(_diet: String) = new Mixin {
   diet = _diet
@@ -4381,7 +4381,7 @@ Thanks to function amending, link:{uri-stdlib-Listing-default}[Listing.default]
 and link:{uri-stdlib-Mapping-default}[Mapping.default] can be treated as if they were objects,
 only gradually revealing their true (single-parameter function) nature:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Mapping {
   default { // <1>
@@ -4402,7 +4402,7 @@ by declaring a comma-separated, arrow (`->`) terminated parameter list after the
 
 Once again, this is especially useful to configure a listing's or mapping's `default` function:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Mapping {
   default { key -> // <1>
@@ -4444,7 +4444,7 @@ Null values with default are used to define properties that are null ("switched 
 Here is an example:
 
 .template.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 // we don't have a pet yet, but already know that it is going to be a bird
 pet = Null(new Dynamic {
@@ -4452,7 +4452,7 @@ pet = Null(new Dynamic {
 })
 ----
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 amends "template.pkl"
 
@@ -4464,7 +4464,7 @@ pet {
 
 A null value can be switched on without adding or overriding a property:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 amends "template.pkl"
 
@@ -4475,12 +4475,12 @@ pet {}
 The predefined `null` value is defined as `Null(new Dynamic {})`.
 In other words, amending `null` is equivalent to amending `Dynamic {}` (the empty dynamic object):
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 pet = null
 ----
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 pet {
   name = "Parry the Parrot"
@@ -4491,7 +4491,7 @@ In most cases, the `Null()` method is not used directly.
 Instead, it is used under the hood to create implicit defaults for properties with nullable type:
 
 .template.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 class Pet {
   name: String
@@ -4502,7 +4502,7 @@ class Pet {
 pet: Pet?
 ----
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 amends "template.pkl"
 
@@ -4523,7 +4523,7 @@ They come in two variants:
 . `when (<condition>) { <members> } else { <members> }`
 
 The following code conditionally generates properties `hobby` and `idol`:
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 isSinger = true
 
@@ -4538,7 +4538,7 @@ parrot {
 
 `when` generators can have an `else` part:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 isSinger = false
 
@@ -4556,7 +4556,7 @@ parrot {
 
 Besides properties, `when` generators can generate elements and entries:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 abilities {
   "chirping"
@@ -4589,7 +4589,7 @@ They come in two variants:
 The following code generates a `birds` object containing three elements.
 Each element is an object with properties `name` and `lifespan`.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 names = List("Pigeon", "Barn owl", "Parrot")
 
@@ -4606,7 +4606,7 @@ birds {
 The following code generates a `birdsByName` object containing three entries.
 Each entry is an object with properties `name` and `lifespan` keyed by name.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 namesAndLifespans = Map("Pigeon", 8, "Barn owl", 15, "Parrot", 20)
 
@@ -4674,7 +4674,7 @@ There are two variants of spread syntax, a non-nullable variant and a nullable v
 Spreading an xref:objects[`Object`] (one of `Dynamic`, `Listing` and `Mapping`) will unpack all of its members into the enclosing object footnote:[Values that are xref:typed-objects[`Typed`] are not iterable.].
 Entries become entries, elements become elements, and properties become properties.
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 entries1 {
   ["Pigeon"] = "Piggy the Pigeon"
@@ -4735,7 +4735,7 @@ Spreading entries or properties may cause conflicts due to matched existing key 
 
 In the following code snippet, `"Pigeon"` is declared twice in the `newPets` object, and thus is an error.
 
-[source%tested%error,{pkl}]
+[source%tested%error,pkl]
 ----
 oldPets {
   ["Pigeon"] = "Piggy the Pigeon"
@@ -4758,14 +4758,14 @@ In contrast, a nullable spread (`\...?`) is syntactic sugar for wrapping a sprea
 
 The following two snippets are logically identical.
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 result {
   ...?myValue
 }
 ----
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 result {
   when (myValue != null) {
@@ -4780,7 +4780,7 @@ result {
 Occasionally it is useful to configure all object members matching a predicate.
 This is especially true when configuring elements, which—unlike entries—cannot be accessed by key:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 environmentVariables {   // <1>
   new { name = "PIGEON"; value = "pigeon-value" }
@@ -4918,7 +4918,7 @@ Additionally, an identifier cannot clash with a keyword.
 To define an identifier that is otherwise illegal, enclose them in backticks.
 This is called a _quoted identifier_.
 
-[source,{pkl}]
+[source,pkl]
 ----
 `A Bird's First Flight Time` = 5.s
 ----
@@ -4927,7 +4927,7 @@ This is called a _quoted identifier_.
 ====
 Backticks are not part of a quoted identifier's name, and surrounding an already legal identifier with backticks is redundant.
 
-[source,{pkl}]
+[source,pkl]
 ----
 `number` = 42 // <1>
 res1 = `number` // <2>
@@ -4945,7 +4945,7 @@ Doc comments are the user-facing documentation of a module and its members.
 They consist of one or more lines starting with a triple slash (`///`).
 Here is a doc comment for a module:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 /// An aviated animal going by the name of [bird](https://en.wikipedia.org/wiki/Bird).
 ///
@@ -4963,7 +4963,7 @@ The following Markdown features are supported:
 ====
 Plaintext URLs are only rendered as links when enclosed in angle brackets:
 
-[source,{pkl}]
+[source,pkl]
 ----
 /// A link is *not* generated for https://example.com.
 /// A link *is* generated for <https://example.com>.
@@ -4988,7 +4988,7 @@ Doc comments can be attached to module, class, type alias, property, and method 
 Here is a comprehensive example:
 
 .Birds.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 /// An aviated animal going by the name of [bird](https://en.wikipedia.org/wiki/Bird).
 ///
@@ -5027,21 +5027,21 @@ function Infant(_name: String): Bird = new { name = _name; lifespan = 0 }
 
 To link to a member declaration, write the member's name enclosed in square brackets (`[]`):
 
-[source,{pkl}]
+[source,pkl]
 ----
 /// A common [Bird] found in large cities.
 ----
 
 To customize the link text, insert the desired text, enclosed in square brackets, before the member name:
 
-[source,{pkl}]
+[source,pkl]
 ----
 /// A [common Bird][Bird] found in large cities.
 ----
 
 Custom link text can use markup:
 
-[source,{pkl}]
+[source,pkl]
 ----
 /// A [*common* Bird][Bird] found in large cities.
 ----
@@ -5089,21 +5089,21 @@ Module Method Parameter::
 
 Members of `pkl.base` can be linked to by their simple name:
 
-[source,{pkl}]
+[source,pkl]
 ----
 /// Returns a [String].
 ----
 
 Module-level members can be prefixed with `module.` to resolve name conflicts:
 
-[source,{pkl}]
+[source,pkl]
 ----
 /// See [module.pigeon].
 ----
 
 To exclude a member from documentation and code completion, annotate it with `@Unlisted`:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 @Unlisted
 pigeon: Bird
@@ -5123,7 +5123,7 @@ Nevertheless, it is a good practice to use member links in the above cases.
 
 Consider this snippet of code buried deep inside a config file:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 a = x + 1
 ----
@@ -5153,7 +5153,7 @@ This is tentatively planned for Pkl 1.0.
 
 Consider this snippet of code buried deep inside a config file:
 
-[source%parsed,{pkl}]
+[source%parsed,pkl]
 ----
 a = x("foo") + 1
 ----
@@ -5197,7 +5197,7 @@ To reduce the chance of naming collisions, `Any` does not define any property na
 
 Consider the following code:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 one = new Dynamic { name = "Pigeon" }
 two = (one) { lifespan = 8 }
@@ -5212,7 +5212,7 @@ The prototype chain of object `two` contains, now listed from top to bottom:
 
 Consider the following code:
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 abstract class Named {
   name: String
@@ -5280,7 +5280,7 @@ it needs to be enclosed in backticks: +`_`+.
 
 ==== Functions and methods
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = List("Robin", "Swallow", "Eagle", "Falcon")
 indexes = birds.mapIndexed((i, _) -> i)
@@ -5290,7 +5290,7 @@ function constantly(_, second) = second
 
 ==== For generators
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birdColors = Map("Robin", "blue", "Eagle", "white", "Falcon", "red")
 
@@ -5303,14 +5303,14 @@ birds = new Listing {
 
 ==== Let bindings
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 name = let (_ = trace("defining name")) "Eagle"
 ----
 
 ==== Object bodies
 
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 birds = new Dynamic {
   default { _ ->
@@ -5343,7 +5343,7 @@ A project is useful for managing <<package-asset-uri,package>> dependencies.
 Within a PklProject file, dependencies can be defined:
 
 .PklProject
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 amends "pkl:Project"
 
@@ -5360,7 +5360,7 @@ This syntax is called _dependency notation_.
 
 Example:
 
-[source,{pkl}]
+[source,pkl]
 ----
 import "@birds/Bird.pkl" // <1>
 
@@ -5433,7 +5433,7 @@ To specify a local dependency, import its `PklProject` file.
 The imported `PklProject` _must_ have a package section defined.
 
 .birds/PklProject
-[source,{pkl}]
+[source,pkl]
 ----
 amends "pkl:Project"
 
@@ -5451,7 +5451,7 @@ package {
 <1> Specify relative project `../fruit` as a dependency.
 
 .fruit/PklProject
-[source,{pkl}]
+[source,pkl]
 ----
 amends "pkl:Project"
 
@@ -5486,7 +5486,7 @@ $ pkl eval <module> --external-resource-reader <scheme>=<executable> --external-
 ----
 
 External readers may also be configured in a <<projects, Project's>> `PklProject` file.
-[source,{pkl}]
+[source,pkl]
 ----
 evaluatorSettings {
   externalResourceReaders {
@@ -5510,7 +5510,7 @@ As with Pkl's built-in module and resource schemes, setting explicit allowed mod
 
 Consider this module:
 
-[source,{pkl}]
+[source,pkl]
 ----
 username = "pigeon"
 

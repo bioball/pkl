@@ -17,7 +17,7 @@ Before you can write types for them, you need to know how to write the types for
 
 These are all Pkl's _basic_ types:
 
-[source,{pkl}]
+[source,pkl]
 .pklTutorialPart3.pkl
 ----
 name: String = "Writing a Template"
@@ -54,7 +54,7 @@ Note how `Duration` and `DataSize` help you prevent https://en.wikipedia.org/wik
 
 Having a notation for basic types, you can now write _typed objects_.
 
-[source,{pkl}]
+[source,pkl]
 .simpleClass.pkl
 ----
 class Language { // <1>
@@ -80,7 +80,7 @@ You can now be certain that every instance of `Language` has a property `name` w
 Types and values are different things in Pkl.
 Pkl does not render types in its output,footnote:[Although, some output formats can contain their own form of type annotation. This may be derived from the Pkl type. Type definitions (`class` and `typealias`) themselves are never rendered.] so when you run Pkl on this, you don't see the class _definition_ at all.
 
-[source,{pkl}]
+[source,pkl]
 ----
 $ pkl eval simpleClass.pkl
 bestForConfig {
@@ -96,7 +96,7 @@ When your configuration describes a few different parts like this, you can defin
 
 For example:
 
-[source,{pkl}]
+[source,pkl]
 .pklTutorialParts.pkl
 ----
 class TutorialPart {
@@ -186,7 +186,7 @@ In our examples of tutorial parts, only the `name` and `part` varied across inst
 You can express this by adding default values to the (module) class definition.
 Instead of starting from a particular tutorial part, you can define the module `tutorialPart` as follows:
 
-[source,{pkl}]
+[source,pkl]
 .TutorialPart.pkl
 ----
 name: String // <1>
@@ -219,7 +219,7 @@ Tried to read property `name` but its value is undefined.
 
 An individual part now only has to fill in the missing fields, so you can change `pklTutorialPart3.pkl` to amend this:
 
-[source,{pkl}]
+[source,pkl]
 .pklTutorialPart3.pkl
 ----
 amends "TutorialPart.pkl"
@@ -261,7 +261,7 @@ It is often easiest to first write a (typical) configuration for which you want 
 Suppose you want to define what a live workshop for this tutorial looks like.
 Consider this example:
 
-[source,{pkl}]
+[source,pkl]
 .workshop2024.pkl
 ----
 title = "Pkl: Configure your Systems in New Ways"
@@ -325,7 +325,7 @@ Call your new template `Workshop.pkl`.
 Although not required, it's good practice to always name your template with a `module`-clause.
 Defining the first few properties are like you saw in the previous section:
 
-[source,{pkl}]
+[source,pkl]
 ----
 module Workshop
 
@@ -346,7 +346,7 @@ Unlike these first few properties, `event` is an object with multiple properties
 To be able to type `event`, you need a `class`.
 You've seen before how to define this:
 
-[source,{pkl}]
+[source,pkl]
 ----
 class Event {
   name: String
@@ -361,13 +361,13 @@ Next, `instructors` isn't an object with properties, but a list of unnamed value
 Pkl offers the `Listing` type for this:
 
 
-[source,{pkl}]
+[source,pkl]
 ----
 instructors: Listing<String>
 ----
 
 `sessions` is a `Listing` of objects, so you need a `Session` class.
-[source,{pkl}]
+[source,pkl]
 ----
 class Session {
   time: Duration
@@ -380,7 +380,7 @@ sessions: Listing<Session>
 
 `assistants` has a structure like an object, in that all the values are named, but the set of names is not fixed for all possible workshops (and some workshops may have more assistants than others). The Pkl type for this is a `Mapping`:
 
-[source,{pkl}]
+[source,pkl]
 ----
 assistants: Mapping<String, String>
 ----
@@ -388,7 +388,7 @@ assistants: Mapping<String, String>
 Finally, for every workshop session, there is an `agenda`, which describes which ``TutorialPart``s are covered.
 You already defined `TutorialPart.pkl` as its own module, so you should not define a separate class, but rather `import` that module and reuse it here:
 
-[source,{pkl}]
+[source,pkl]
 ----
 import "TutorialPart.pkl" // <1>
 
@@ -398,7 +398,7 @@ agenda: Mapping<String, TutorialPart>
 
 Putting it all together, your `Workshop.pkl` template looks like this:
 
-[source,{pkl}]
+[source,pkl]
 .Workshop.pkl
 ----
 module Workshop

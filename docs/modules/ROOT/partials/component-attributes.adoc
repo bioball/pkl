@@ -53,11 +53,6 @@ endif::[]
 :uri-pkl-cli-main-sources: {uri-github-tree}/pkl-cli/src/main/kotlin/org/pkl/cli
 :uri-pkl-doc-main-sources: {uri-github-tree}/pkl-doc/src/main/kotlin/org/pkl/doc
 
-// This attribute is used as language for Pkl code blocks.
-// It can then be mapped to different languages in different environments (e.g., IntelliJ vs. Antora).
-:pkl: pkl
-:pkl-expr: pkl expression
-
 :uri-pkl-examples-repo: https://github.com/apple/pkl-jvm-examples
 :uri-pkl-examples-tree: {uri-pkl-examples-repo}/tree/main
 :uri-build-eval-example: {uri-pkl-examples-tree}/build-eval

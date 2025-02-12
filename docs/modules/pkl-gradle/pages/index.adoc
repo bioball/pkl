@@ -233,7 +233,7 @@ The resulting value is then stringified, and written to the designated output fi
 For example, consider the following Pkl module:
 
 .my-pod.pkl
-[source%tested,{pkl}]
+[source%tested,pkl]
 ----
 metadata {
   name = "my-pod"

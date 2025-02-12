@@ -10,7 +10,7 @@ You will also find and fill out an existing _template_.
 The central mechanism in Pkl for expressing one (part of a) configuration in terms of another is _amending_.
 Consider the following example.
 
-[source,{pkl}]
+[source,pkl]
 .amendingObjects.pkl
 ----
 bird {
@@ -36,7 +36,7 @@ Parrot and Pigeon have nearly identical properties.
 They only differ in their name and taxonomy, so if you have already written out `bird`, you can say that `parrot` is just like `bird` except `name` is `"Parrot"`, diet is `"Berries"` the `taxonomy.order` is `"Psittaciformes"`.
 When you run this, Pkl expands everything fully.
 
-[source,{pkl}]
+[source,pkl]
 ----
 bird {
   name = "Pigeon"
@@ -72,7 +72,7 @@ You can also amend nested objects.
 This allows you to only describe the difference with the outermost object for arbitrarily deeply nested structures.
 Consider the following example.
 
-[source,{pkl}]
+[source,pkl]
 .nestedAmends.pkl
 ----
 stockPigeon {
@@ -112,7 +112,7 @@ They have the same `taxonomy`, except for `species`.
 This notation says that everything in `taxonomy` should be what it is in the object you are amending (`stockPigeon`), except for `species`, which should be `"Columba palumbus"` .
 
 For the input above, Pkl produces the following output.
-[source,{pkl}]
+[source,pkl]
 ----
 stockPigeon {
   name = "Stock pigeon"
@@ -151,7 +151,7 @@ So far, you have only amended _properties_.
 Since you refer to them by name, it makes sense that you "overwrite" the value from the object you're amending.
 What if you include _elements_ or _entries_ in an amends expression?
 
-[source,{pkl}]
+[source,pkl]
 .amendElementsAndEntries.pkl
 ----
 favoriteFoods {
@@ -184,7 +184,7 @@ When you want to _replace_ an element, you have to explicitly amend the element 
 This is why a "plain" element in an amends expression is _added_ to the object being amended.
 Result:
 
-[source,{pkl}]
+[source,pkl]
 ----
 favoriteFoods {
   ["Barn owl"] {
@@ -215,7 +215,7 @@ A `.pkl` file describes a _module_.
 Modules are objects that can be referred to from other modules.
 Going back to the example above, you can write `pigeon` as a separate module.
 
-[source,{pkl}]
+[source,pkl]
 .pigeon.pkl
 ----
 name = "Common wood pigeon"
@@ -229,7 +229,7 @@ taxonomy {
 
 You can `import` this module and express `parrot` like you did before.
 
-[source,{pkl}]
+[source,pkl]
 .parrot.pkl
 ----
 import "pigeon.pkl" // <1>
@@ -247,7 +247,7 @@ parrot = (pigeon) {
 If you run Pkl on both, you will see that it works.
 Looking at the result, however, you see a (possibly) unexpected difference.
 
-[source,{pkl}]
+[source,pkl]
 ----
 $ pkl eval /Users/me/tutorial/pigeon.pkl
 name = "Common wood pigeon"
@@ -275,7 +275,7 @@ This is because writing `parrot {...}` defines an object property _in_ the "curr
 
 In order to say that "this module is an object, amended from the `pigeon` module," you use an _amends clause_.
 
-[source,{pkl}]
+[source,pkl]
 .parrot.pkl
 ----
 amends "pigeon.pkl" // <1>
@@ -295,7 +295,7 @@ A Pkl file can be either a _template_ or a _"normal" module_.
 This terminology describes the _intended use_ of the module and doesn't imply anything about its structure.
 In other words: just by looking at Pkl code, you can't tell whether it is a template or a "normal" module.
 
-[source,{pkl}]
+[source,pkl]
 .AcmeCICD.pkl
 ----
 module AcmeCICD
@@ -325,7 +325,7 @@ That's exactly what you're doing here; you're filling out "work order forms".
 
 Next, add a time-out of one minute for your job.
 
-[source,{pkl}]
+[source,pkl]
 .cicd.pkl
 ----
 amends "AcmeCICD.pkl"
@@ -378,7 +378,7 @@ pipelines: []
 You can now define a pipeline.
 Start off by specifying the name of the pipeline and nothing else.
 
-[source,{pkl}]
+[source,pkl]
 .cicd.pkl
 ----
 amends "AcmeCICD.pkl"
@@ -433,7 +433,7 @@ When constraints are complicated or very application specific, template authors 
 
 The message is quite instructive, so you can fix the error by adding a `branchName`.
 
-[source,{pkl}]
+[source,pkl]
 .cicd.pkl
 ----
 amends "AcmeCICD.pkl"
@@ -449,7 +449,7 @@ pipelines {
 
 and indeed
 
-[source,{pkl}]
+[source,pkl]
 ----
 $ pkl eval -f yml /Users/me/tutorial/cicd.pkl
 timeout: 3
