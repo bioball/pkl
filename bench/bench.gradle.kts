@@ -30,6 +30,7 @@ dependencies {
 }
 
 jmh {
+  includes = listOf("Withers")
   // include = ["fib_class_java"]
   // include = ["fib_class_constrained1", "fib_class_constrained2"]
   jmhVersion.set(libs.versions.jmh)
