@@ -107,6 +107,32 @@ public abstract class ModulesTask extends BasePklTask {
   @Optional
   public abstract Property<Boolean> getNoProject();
 
+  @Override
+  @Internal
+  protected List<String> getExtraFlags() {
+    var args = super.getExtraFlags();
+    applyIfNotNull(
+        getProjectDir(),
+        (projectDir) -> {
+          args.add("--project-dir");
+          args.add(projectDir.getAsFile().getAbsolutePath());
+        });
+    if (getOmitProjectSettings().getOrElse(false)) {
+      args.add("--no-project");
+    }
+    return args;
+  }
+
+  @Override
+  @Internal
+  protected final List<String> getCliArguments() {
+    var args = super.getCliArguments();
+    for (var uri : getSourceModulesAsUris()) {
+      args.add(uri.toString());
+    }
+    return args;
+  }
+
   /**
    * A source module can be either a file or a URI. Files can be tracked, so this method splits a
    * collection of module notations (which can be strings, URIs, URLs, Files or Paths) into a list
@@ -129,11 +155,11 @@ public abstract class ModulesTask extends BasePklTask {
 
   @TaskAction
   @Override
-  public void runTask() {
-    if (getCliBaseOptions().getNormalizedSourceModules().isEmpty()) {
+  public void exec() {
+    if (getSourceModulesAsUris().isEmpty()) {
       throw new InvalidUserDataException("No source modules specified.");
     }
-    withFallbackTruffleRuntime(this::doRunTask);
+    super.exec();
   }
 
   @Internal

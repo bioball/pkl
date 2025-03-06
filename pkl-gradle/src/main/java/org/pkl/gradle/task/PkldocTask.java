@@ -15,12 +15,12 @@
  */
 package org.pkl.gradle.task;
 
+import java.util.List;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputDirectory;
-import org.pkl.doc.CliDocGenerator;
-import org.pkl.doc.CliDocGeneratorOptions;
 
 public abstract class PkldocTask extends ModulesTask {
   @OutputDirectory
@@ -30,13 +30,30 @@ public abstract class PkldocTask extends ModulesTask {
   public abstract Property<Boolean> getNoSymlinks();
 
   @Override
-  protected void doRunTask() {
-    new CliDocGenerator(
-            new CliDocGeneratorOptions(
-                getCliBaseOptions(),
-                getOutputDir().get().getAsFile().toPath(),
-                false,
-                getNoSymlinks().get()))
-        .run();
+  @Internal
+  protected final List<String> getCommandName() {
+    return List.of();
+  }
+
+  @Override
+  @Internal
+  protected final String getMainClassName() {
+    return "org.pkl.doc.Main";
+  }
+
+  @Override
+  @Internal
+  protected final List<String> getExtraFlags() {
+    var ret = super.getExtraFlags();
+    applyIfNotNull(
+        getOutputDir(),
+        (outputDir) -> {
+          ret.add("--output-dir");
+          ret.add(outputDir.getAsFile().getAbsolutePath());
+        });
+    if (getNoSymlinks().getOrElse(false)) {
+      ret.add("--no-symlinks");
+    }
+    return ret;
   }
 }

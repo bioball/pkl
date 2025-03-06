@@ -21,18 +21,19 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import java.nio.file.Path
 import org.pkl.commons.cli.CliTestOptions
+import org.pkl.commons.cli.Flags
 
 class TestOptions : OptionGroup() {
   private val junitReportDir: Path? by
     option(
-        names = arrayOf("--junit-reports"),
+        names = Flags.JUNIT_REPORTS.names,
         metavar = "dir",
         help = "Directory where to store JUnit reports.",
       )
       .path()
 
   private val overwrite: Boolean by
-    option(names = arrayOf("--overwrite"), help = "Force generation of expected examples.").flag()
+    option(names = Flags.OVERWRITE.names, help = "Force generation of expected examples.").flag()
 
   val cliTestOptions: CliTestOptions by lazy { CliTestOptions(junitReportDir, overwrite) }
 }

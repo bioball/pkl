@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,37 @@
 package org.pkl.gradle.task;
 
 import java.io.File;
+import java.util.List;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
-import org.pkl.codegen.kotlin.CliKotlinCodeGenerator;
-import org.pkl.codegen.kotlin.CliKotlinCodeGeneratorOptions;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.TaskAction;
 
 public abstract class KotlinCodeGenTask extends CodeGenTask {
   @Input
   public abstract Property<Boolean> getGenerateKdoc();
 
   @Override
-  protected void doRunTask() {
+  @Internal
+  protected final String getMainClassName() {
+    return "org.pkl.codegen.kotlin.Main";
+  }
+
+  @Override
+  @Internal
+  protected final List<String> getExtraFlags() {
+    var ret = super.getExtraFlags();
+    if (getGenerateKdoc().getOrElse(false)) {
+      ret.add("--generate-kdoc");
+    }
+    return ret;
+  }
+
+  @Override
+  @TaskAction
+  public void exec() {
     //noinspection ResultOfMethodCallIgnored
     getOutputs().getPreviousOutputFiles().forEach(File::delete);
-
-    new CliKotlinCodeGenerator(
-            new CliKotlinCodeGeneratorOptions(
-                getCliBaseOptions(),
-                getProject().file(getOutputDir()).toPath(),
-                getIndent().get(),
-                getGenerateKdoc().get(),
-                getGenerateSpringBootConfig().get(),
-                getImplementSerializable().get(),
-                getRenames().get()))
-        .run();
+    super.exec();
   }
 }

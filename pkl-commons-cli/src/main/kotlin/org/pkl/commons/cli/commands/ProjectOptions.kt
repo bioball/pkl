@@ -20,6 +20,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path
 import java.nio.file.Path
+import org.pkl.commons.cli.Flags
 
 /**
  * Options related to projects for CLI commands that are related to normal evaluation (`pkl eval`,
@@ -28,7 +29,7 @@ import java.nio.file.Path
 class ProjectOptions : OptionGroup() {
   val projectDir: Path? by
     option(
-        names = arrayOf("--project-dir"),
+        names = Flags.PROJECT_DIR.names,
         metavar = "path",
         help =
           "The project directory to use for this command. By default, searches up from the working directory for a PklProject file.",
@@ -38,7 +39,7 @@ class ProjectOptions : OptionGroup() {
 
   val omitProjectSettings: Boolean by
     option(
-        names = arrayOf("--omit-project-settings"),
+        names = Flags.OMIT_PROJECT_SETTINGS.names,
         help = "Ignores evaluator settings set in the PklProject file.",
       )
       .single()
@@ -46,7 +47,7 @@ class ProjectOptions : OptionGroup() {
 
   val noProject: Boolean by
     option(
-        names = arrayOf("--no-project"),
+        names = Flags.NO_PROJECT.names,
         help = "Disables loading settings and dependencies from the PklProject file.",
       )
       .single()

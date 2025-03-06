@@ -53,7 +53,7 @@ class DownloadPackageCommand : BaseCommand(name = "download-package", helpLink =
 
   private val noTransitive: Boolean by
     option(
-        names = arrayOf("--no-transitive"),
+        names = Flags.NO_TRANSITIVE.names,
         help = "Skip downloading transitive dependencies of a package",
       )
       .single()

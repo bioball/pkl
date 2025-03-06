@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 package org.pkl.gradle.task;
 
 import java.io.File;
+import java.util.List;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
-import org.pkl.cli.CliImportAnalyzer;
-import org.pkl.cli.CliImportAnalyzerOptions;
+import org.gradle.api.tasks.TaskAction;
 
-public abstract class AnalyzeImportsTask extends ModulesTask {
+public abstract class AnalyzeImportsTask extends PklCliModulesTask {
   @OutputFile
   @Optional
   public abstract RegularFileProperty getOutputFile();
@@ -33,20 +33,37 @@ public abstract class AnalyzeImportsTask extends ModulesTask {
   @Input
   public abstract Property<String> getOutputFormat();
 
-  private final Provider<CliImportAnalyzer> cliImportAnalyzerProvider =
-      getProviders()
-          .provider(
-              () ->
-                  new CliImportAnalyzer(
-                      new CliImportAnalyzerOptions(
-                          getCliBaseOptions(),
-                          mapAndGetOrNull(getOutputFile(), it -> it.getAsFile().toPath()),
-                          mapAndGetOrNull(getOutputFormat(), it -> it))));
+  @Override
+  @Internal
+  protected final List<String> getCommandName() {
+    return List.of("analyze", "imports");
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  @Override
+  @Internal
+  protected final List<String> getExtraFlags() {
+    var ret = super.getExtraFlags();
+    applyIfNotNull(
+        getOutputFile(),
+        (outputFile) -> {
+          ret.add("--output-path");
+          ret.add(outputFile.getAsFile().getAbsolutePath());
+        });
+    applyIfNotNull(
+        getOutputFormat(),
+        (outputFormat) -> {
+          ret.add("--format");
+          ret.add(outputFormat);
+        });
+    return ret;
+  }
 
   @Override
-  protected void doRunTask() {
+  @TaskAction
+  public final void exec() {
     //noinspection ResultOfMethodCallIgnored
     getOutputs().getPreviousOutputFiles().forEach(File::delete);
-    cliImportAnalyzerProvider.get().run();
+    super.exec();
   }
 }

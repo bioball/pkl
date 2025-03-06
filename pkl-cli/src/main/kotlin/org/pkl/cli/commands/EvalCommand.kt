@@ -30,7 +30,7 @@ class EvalCommand : ModulesCommand(name = "eval", helpLink = helpLink) {
 
   private val outputPath: String? by
     option(
-        names = arrayOf("-o", "--output-path"),
+        names = Flags.OUTPUT_PATH.names,
         metavar = "path",
         help = "File path where the output file is placed.",
       )
@@ -38,7 +38,7 @@ class EvalCommand : ModulesCommand(name = "eval", helpLink = helpLink) {
 
   private val moduleOutputSeparator: String by
     option(
-        names = arrayOf("--module-output-separator"),
+        names = Flags.MODULE_OUTPUT_SEPARATOR.names,
         metavar = "string",
         help =
           "Separator to use when multiple module outputs are written to the same file. (default: ---)",
@@ -48,7 +48,7 @@ class EvalCommand : ModulesCommand(name = "eval", helpLink = helpLink) {
 
   private val expression: String? by
     option(
-        names = arrayOf("-x", "--expression"),
+        names = Flags.EXPRESSION.names,
         metavar = "expression",
         help = "Expression to be evaluated within the module.",
       )
@@ -56,7 +56,7 @@ class EvalCommand : ModulesCommand(name = "eval", helpLink = helpLink) {
 
   private val multipleFileOutputPath: String? by
     option(
-        names = arrayOf("-m", "--multiple-file-output-path"),
+        names = Flags.MULTIPLE_FILE_OUTPUT_PATH.names,
         metavar = "path",
         help = "Directory where a module's multiple file output is placed.",
       )
@@ -69,7 +69,7 @@ class EvalCommand : ModulesCommand(name = "eval", helpLink = helpLink) {
 
   // hidden option used by the native tests
   private val testMode: Boolean by
-    option(names = arrayOf("--test-mode"), help = "Internal test mode", hidden = true).flag()
+    option(names = Flags.TEST_MODE.names, help = "Internal test mode", hidden = true).flag()
 
   override fun run() {
     val options =

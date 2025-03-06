@@ -563,8 +563,6 @@ class EvaluatorsTest : AbstractTest() {
     writeFile(
       "build.gradle.kts",
       """
-      import org.pkl.gradle.task.EvalTask
-
       plugins {
         id("org.pkl-lang")
       }
@@ -579,7 +577,7 @@ class EvaluatorsTest : AbstractTest() {
         }
       }
 
-      val doEval by tasks.existing(EvalTask::class) {
+      val doEval by tasks.existing {
         doLast {
           file("evalCounter.txt").appendText("doEval executed\n")
         }

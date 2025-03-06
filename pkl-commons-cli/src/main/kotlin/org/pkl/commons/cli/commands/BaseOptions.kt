@@ -29,6 +29,7 @@ import java.time.Duration
 import java.util.regex.Pattern
 import org.pkl.commons.cli.CliBaseOptions
 import org.pkl.commons.cli.CliException
+import org.pkl.commons.cli.Flags
 import org.pkl.commons.shlex
 import org.pkl.core.evaluatorSettings.Color
 import org.pkl.core.evaluatorSettings.PklEvaluatorSettings.ExternalReader
@@ -100,7 +101,7 @@ class BaseOptions : OptionGroup() {
 
   val allowedModules: List<Pattern> by
     option(
-        names = arrayOf("--allowed-modules"),
+        names = Flags.ALLOWED_MODULES.names,
         help = "URI patterns that determine which modules can be loaded and evaluated.",
       )
       .convert("pattern1,pattern2") { Pattern.compile(it) }
@@ -108,7 +109,7 @@ class BaseOptions : OptionGroup() {
 
   val allowedResources: List<Pattern> by
     option(
-        names = arrayOf("--allowed-resources"),
+        names = Flags.ALLOWED_RESOURCES.names,
         help = "URI patterns that determine which external resources can be read.",
       )
       .convert("pattern1,pattern2") { Pattern.compile(it) }
@@ -116,7 +117,7 @@ class BaseOptions : OptionGroup() {
 
   val rootDir: Path? by
     option(
-        names = arrayOf("--root-dir"),
+        names = Flags.ROOT_DIR.names,
         help =
           "Restricts access to file-based modules and resources to those located under the root directory.",
       )
@@ -124,13 +125,13 @@ class BaseOptions : OptionGroup() {
       .path()
 
   val cacheDir: Path? by
-    option(names = arrayOf("--cache-dir"), help = "The cache directory for storing packages.")
+    option(names = Flags.CACHE_DIR.names, help = "The cache directory for storing packages.")
       .single()
       .path()
 
   val workingDir: Path by
     option(
-        names = arrayOf("-w", "--working-dir"),
+        names = Flags.WORKING_DIR.names,
         help = "Base path that relative module paths are resolved against.",
       )
       .single()
@@ -139,7 +140,7 @@ class BaseOptions : OptionGroup() {
 
   val properties: Map<String, String> by
     option(
-        names = arrayOf("-p", "--property"),
+        names = Flags.PROPERTY.names,
         metavar = "name=value",
         help = "External property to set (repeatable).",
       )
@@ -147,7 +148,7 @@ class BaseOptions : OptionGroup() {
 
   val color: Color by
     option(
-        names = arrayOf("--color"),
+        names = Flags.COLOR.names,
         metavar = "when",
         help =
           "Whether to format messages in ANSI color. Possible values of <when> are 'never', 'auto', and 'always'.",
@@ -157,20 +158,20 @@ class BaseOptions : OptionGroup() {
       .default(Color.AUTO)
 
   val noCache: Boolean by
-    option(names = arrayOf("--no-cache"), help = "Disable caching of packages")
+    option(names = Flags.NO_CACHE.names, help = "Disable caching of packages")
       .single()
       .flag(default = false)
 
   val format: String? by
     option(
-        names = arrayOf("-f", "--format"),
+        names = Flags.FORMAT.names,
         help = "Output format to generate. <${output.joinToString()}>",
       )
       .single()
 
   val envVars: Map<String, String> by
     option(
-        names = arrayOf("-e", "--env-var"),
+        names = Flags.ENV_VAR.names,
         metavar = "name=value",
         help = "Environment variable to set (repeatable).",
       )
@@ -178,7 +179,7 @@ class BaseOptions : OptionGroup() {
 
   val modulePath: List<Path> by
     option(
-        names = arrayOf("--module-path"),
+        names = Flags.MODULE_PATH.names,
         metavar = "path1${File.pathSeparator}path2",
         help =
           "Directories, ZIP archives, or JAR archives to search when resolving `modulepath:` URIs.",
@@ -187,13 +188,13 @@ class BaseOptions : OptionGroup() {
       .splitAll(File.pathSeparator)
 
   val settings: URI? by
-    option(names = arrayOf("--settings"), help = "Pkl settings module to use.").single().convert {
+    option(names = Flags.SETTINGS.names, help = "Pkl settings module to use.").single().convert {
       parseModuleName(it)
     }
 
   val timeout: Duration? by
     option(
-        names = arrayOf("-t", "--timeout"),
+        names = Flags.TIMEOUT.names,
         metavar = "number",
         help = "Duration, in seconds, after which evaluation of a source module will be timed out.",
       )
@@ -203,7 +204,7 @@ class BaseOptions : OptionGroup() {
 
   val caCertificates: List<Path> by
     option(
-        names = arrayOf("--ca-certificates"),
+        names = Flags.CA_CERTIFICATES.names,
         metavar = "path",
         help = "Only trust CA certificates from the provided file(s).",
       )
@@ -212,7 +213,7 @@ class BaseOptions : OptionGroup() {
 
   val proxy: URI? by
     option(
-        names = arrayOf("--http-proxy"),
+        names = Flags.HTTP_PROXY.names,
         metavar = "address",
         help = "Proxy to use for HTTP(S) connections.",
       )
@@ -228,7 +229,7 @@ class BaseOptions : OptionGroup() {
 
   val noProxy: List<String>? by
     option(
-        names = arrayOf("--http-no-proxy"),
+        names = Flags.HTTP_NO_PROXY.names,
         metavar = "pattern1,pattern",
         help = "Hostnames that should not be connected to via a proxy.",
       )
@@ -237,7 +238,7 @@ class BaseOptions : OptionGroup() {
 
   val externalModuleReaders: Map<String, ExternalReader> by
     option(
-        names = arrayOf("--external-module-reader"),
+        names = Flags.EXTERNAL_MODULE_READER.names,
         metavar = "<scheme>='<executable> [<arguments>]'",
         help = "External reader registrations for module URI schemes",
       )
@@ -247,7 +248,7 @@ class BaseOptions : OptionGroup() {
 
   val externalResourceReaders: Map<String, ExternalReader> by
     option(
-        names = arrayOf("--external-resource-reader"),
+        names = Flags.EXTERNAL_RESOURCE_READER.names,
         metavar = "<scheme>='<executable> [<arguments>]'",
         help = "External reader registrations for resource URI schemes",
       )
@@ -257,7 +258,7 @@ class BaseOptions : OptionGroup() {
 
   // hidden option used by native tests
   private val testPort: Int by
-    option(names = arrayOf("--test-port"), help = "Internal test option", hidden = true)
+    option(names = Flags.TEST_PORT.names, help = "Internal test option", hidden = true)
       .single()
       .int()
       .default(-1)

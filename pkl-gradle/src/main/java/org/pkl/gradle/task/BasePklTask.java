@@ -20,14 +20,15 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.model.ObjectFactory;
@@ -40,19 +41,29 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.process.CommandLineArgumentProvider;
 import org.pkl.commons.cli.CliBaseOptions;
+import org.pkl.commons.cli.Flags;
 import org.pkl.core.evaluatorSettings.Color;
 import org.pkl.core.util.LateInit;
 import org.pkl.core.util.Nullable;
 import org.pkl.gradle.utils.PluginUtils;
 
-public abstract class BasePklTask extends DefaultTask {
-  private static final String TRUFFLE_USE_FALLBACK_RUNTIME_FLAG = "truffle.UseFallbackRuntime";
-
-  private static final String POLYGLOT_WARN_INTERPRETER_ONLY_FLAG =
-      "polyglot.engine.WarnInterpreterOnly";
+public abstract class BasePklTask extends JavaExec {
+  protected BasePklTask() {
+    //noinspection Convert2Lambda,Anonymous2MethodRef
+    getArgumentProviders()
+        .add(
+            new CommandLineArgumentProvider() {
+              @Override
+              public Iterable<String> asArguments() {
+                return getCliArguments();
+              }
+            });
+    getMainClass().set(getMainClassName());
+  }
 
   @Input
   public abstract ListProperty<String> getAllowedModules();
@@ -142,31 +153,118 @@ public abstract class BasePklTask extends DefaultTask {
   @Optional
   public abstract ListProperty<String> getHttpNoProxy();
 
-  /**
-   * There are issues with using native libraries in Gradle plugins. As a workaround for now, make
-   * Truffle use an un-optimized runtime.
-   *
-   * @see <a
-   *     href="https://discuss.gradle.org/t/loading-a-native-library-in-a-gradle-plugin/44854">https://discuss.gradle.org/t/loading-a-native-library-in-a-gradle-plugin/44854</a>
-   * @see <a
-   *     href="https://github.com/apple/pkl/issues/988">https://github.com/apple/pkl/issues/988</a>
-   */
-  // TODO: Remove this workaround when ugprading to Truffle 24.2+ (Truffle automatically falls back
-  // in this scenario).
-  protected void withFallbackTruffleRuntime(Runnable task) {
-    System.setProperty(TRUFFLE_USE_FALLBACK_RUNTIME_FLAG, "true");
-    System.setProperty(POLYGLOT_WARN_INTERPRETER_ONLY_FLAG, "false");
-    task.run();
-  }
+  protected abstract List<String> getCommandName();
 
-  @TaskAction
-  public void runTask() {
-    withFallbackTruffleRuntime(this::doRunTask);
-  }
-
-  protected abstract void doRunTask();
+  protected abstract String getMainClassName();
 
   @LateInit protected CliBaseOptions cachedOptions;
+
+  private void addAllowedPattern(
+      List<String> args, String argName, ListProperty<String> allowedPatterns) {
+    var patterns = allowedPatterns.get();
+    if (patterns.isEmpty()) {
+      return;
+    }
+    args.add(argName);
+    args.add(String.join(",", patterns));
+  }
+
+  private void addExternalValues(
+      List<String> args,
+      String argName,
+      MapProperty<String, String> value,
+      @Nullable String defaultValue) {
+    var map = value.get();
+    if (map.isEmpty()) {
+      if (defaultValue != null) {
+        args.add(argName);
+        args.add(defaultValue);
+      }
+      return;
+    }
+    for (var entry : map.entrySet()) {
+      args.add(argName);
+      args.add(entry.getKey() + "=" + entry.getValue());
+    }
+  }
+
+  @Internal
+  protected List<String> getExtraFlags() {
+    return new ArrayList<>();
+  }
+
+  @Internal
+  protected List<String> getCliArguments() {
+    var ret = new ArrayList<>(getCommandName());
+    addAllowedPattern(ret, Flags.ALLOWED_MODULES.getLongName(), getAllowedModules());
+    addAllowedPattern(ret, Flags.ALLOWED_RESOURCES.getLongName(), getAllowedResources());
+    addExternalValues(ret, Flags.ENV_VAR.getLongName(), getEnvironmentVariables(), "=");
+    addExternalValues(ret, Flags.PROPERTY.getLongName(), getExternalProperties(), null);
+    var modulePath = parseModulePath();
+    if (!modulePath.isEmpty()) {
+      ret.add(Flags.MODULE_PATH.getLongName());
+      ret.add(
+          modulePath.stream()
+              .map((it) -> it.toAbsolutePath().toString())
+              .collect(Collectors.joining(":")));
+    }
+    ret.add(Flags.WORKING_DIR.getLongName());
+    ret.add(getProject().getProjectDir().getAbsolutePath());
+    applyIfNotNull(
+        getEvalRootDirPath(),
+        (rootDir) -> {
+          ret.add(Flags.ROOT_DIR.getLongName());
+          ret.add(rootDir);
+        });
+    applyIfNotNull(
+        getSettingsModule(),
+        (settingsModule) -> {
+          var uri =
+              PluginUtils.parsedModuleNotationToUri(
+                  PluginUtils.parseModuleNotation(settingsModule));
+          ret.add(Flags.SETTINGS.getLongName());
+          ret.add(uri.toString());
+        });
+    applyIfNotNull(
+        getEvalTimeout(),
+        (timeout) -> {
+          ret.add(Flags.TIMEOUT.getLongName());
+          ret.add(String.valueOf(timeout.toSeconds()));
+        });
+    applyIfNotNull(
+        getModuleCacheDir(),
+        (moduleCacheDir) -> {
+          ret.add(Flags.CACHE_DIR.getLongName());
+          ret.add(moduleCacheDir.getAsFile().getAbsolutePath());
+        });
+    ret.add(Flags.COLOR.getLongName());
+    if (getColor().getOrElse(false)) {
+      ret.add("always");
+    } else {
+      ret.add("never");
+    }
+    if (getNoCache().getOrElse(false)) {
+      ret.add(Flags.NO_CACHE.getLongName());
+    }
+    var testPort = getTestPort().getOrElse(-1);
+    ret.add(Flags.TEST_PORT.getLongName());
+    ret.add(testPort.toString());
+    applyIfNotNull(
+        getHttpProxy(),
+        (httpProxy) -> {
+          ret.add(Flags.HTTP_PROXY.getLongName());
+          ret.add(httpProxy.toString());
+        });
+    applyIfNotNull(
+        getHttpNoProxy(),
+        (httpNoProxy) -> {
+          if (httpNoProxy.isEmpty()) return;
+          ret.add(Flags.HTTP_NO_PROXY.getLongName());
+          ret.add(String.join(",", httpNoProxy));
+        });
+    ret.addAll(getExtraFlags());
+    return ret;
+  }
 
   // Must be called during task execution time only.
   @Internal
@@ -230,5 +328,12 @@ public abstract class BasePklTask extends DefaultTask {
   protected <T, U> @Nullable U mapAndGetOrNull(Provider<T> provider, Function<T, U> f) {
     @Nullable T value = provider.getOrNull();
     return value == null ? null : f.apply(value);
+  }
+
+  protected <T> void applyIfNotNull(Provider<T> provider, Consumer<T> f) {
+    var value = provider.getOrNull();
+    if (value != null) {
+      f.accept(value);
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package org.pkl.gradle.task;
 
 import java.io.File;
+import java.util.List;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
-import org.pkl.codegen.java.CliJavaCodeGenerator;
-import org.pkl.codegen.java.CliJavaCodeGeneratorOptions;
+import org.gradle.api.tasks.TaskAction;
 
 public abstract class JavaCodeGenTask extends CodeGenTask {
   @Input
@@ -38,22 +39,41 @@ public abstract class JavaCodeGenTask extends CodeGenTask {
   public abstract Property<String> getNonNullAnnotation();
 
   @Override
-  protected void doRunTask() {
+  @Internal
+  protected final List<String> getExtraFlags() {
+    var ret = super.getExtraFlags();
+    if (getGenerateGetters().getOrElse(false)) {
+      ret.add("--generate-getters");
+    }
+    if (getGenerateJavadoc().getOrElse(false)) {
+      ret.add("--generate-javadoc");
+    }
+    applyIfNotNull(
+        getParamsAnnotation(),
+        (paramsAnnotation) -> {
+          ret.add("--params-annotation");
+          ret.add(paramsAnnotation);
+        });
+    applyIfNotNull(
+        getNonNullAnnotation(),
+        (nonNullAnnotation) -> {
+          ret.add("--non-null-annotation");
+          ret.add(nonNullAnnotation);
+        });
+    return ret;
+  }
+
+  @Override
+  @Internal
+  protected final String getMainClassName() {
+    return "org.pkl.codegen.java.Main";
+  }
+
+  @Override
+  @TaskAction
+  public final void exec() {
     //noinspection ResultOfMethodCallIgnored
     getOutputs().getPreviousOutputFiles().forEach(File::delete);
-
-    new CliJavaCodeGenerator(
-            new CliJavaCodeGeneratorOptions(
-                getCliBaseOptions(),
-                getProject().file(getOutputDir()).toPath(),
-                getIndent().get(),
-                getGenerateGetters().get(),
-                getGenerateJavadoc().get(),
-                getGenerateSpringBootConfig().get(),
-                getParamsAnnotation().getOrNull(),
-                getNonNullAnnotation().getOrNull(),
-                getImplementSerializable().get(),
-                getRenames().get()))
-        .run();
+    super.exec();
   }
 }

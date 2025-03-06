@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.pkl.gradle.task;
 
-import java.io.File;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.file.DirectoryProperty;
@@ -31,8 +31,12 @@ import org.gradle.api.tasks.OutputDirectories;
 import org.gradle.api.tasks.OutputFiles;
 import org.pkl.cli.CliEvaluator;
 import org.pkl.cli.CliEvaluatorOptions;
+import org.pkl.cli.commands.Flags;
 
-public abstract class EvalTask extends ModulesTask {
+public abstract class EvalTask extends PklCliModulesTask {
+  public EvalTask() {
+    super();
+  }
 
   // not tracked because it might contain placeholders
   // required
@@ -51,6 +55,7 @@ public abstract class EvalTask extends ModulesTask {
   public abstract Property<String> getModuleOutputSeparator();
 
   @Input
+  @Optional
   public abstract Property<String> getExpression();
 
   private final Provider<CliEvaluator> cliEvaluator =
@@ -60,12 +65,56 @@ public abstract class EvalTask extends ModulesTask {
                   new CliEvaluator(
                       new CliEvaluatorOptions(
                           getCliBaseOptions(),
-                          getOutputFile().get().getAsFile().getAbsolutePath(),
+                          mapAndGetOrNull(getOutputFile(), it -> it.getAsFile().getAbsolutePath()),
                           getOutputFormat().get(),
                           getModuleOutputSeparator().get(),
                           mapAndGetOrNull(
                               getMultipleFileOutputDir(), it -> it.getAsFile().getAbsolutePath()),
-                          getExpression().get())));
+                          getExpression().getOrElse(CliEvaluatorOptions.Companion.getDefaults().getExpression()))));
+
+  @SuppressWarnings("DuplicatedCode")
+  @Override
+  @Internal
+  protected final List<String> getExtraFlags() {
+    var ret = super.getExtraFlags();
+    applyIfNotNull(
+        getOutputFile(),
+        (outputFile) -> {
+          ret.add(Flags.OUTPUT_PATH.getLongName());
+          ret.add(outputFile.getAsFile().getAbsolutePath());
+        });
+    applyIfNotNull(
+        getMultipleFileOutputDir(),
+        (multipleFileOutputDir) -> {
+          ret.add("--multiple-file-output-path");
+          ret.add(multipleFileOutputDir.getAsFile().getAbsolutePath());
+        });
+    applyIfNotNull(
+        getOutputFormat(),
+        (outputFormat) -> {
+          ret.add("--format");
+          ret.add(outputFormat);
+        });
+    applyIfNotNull(
+        getModuleOutputSeparator(),
+        (separator) -> {
+          ret.add("--module-output-separator");
+          ret.add(separator);
+        });
+    applyIfNotNull(
+        getExpression(),
+        (expression) -> {
+          ret.add("--expression");
+          ret.add(expression);
+        });
+    return ret;
+  }
+
+  @Override
+  @Internal
+  protected final List<String> getCommandName() {
+    return List.of("eval");
+  }
 
   @SuppressWarnings("unused")
   @OutputFiles
@@ -86,12 +135,5 @@ public abstract class EvalTask extends ModulesTask {
 
   private static <T> Set<T> nullToEmpty(@Nullable Set<T> set) {
     return set == null ? Collections.emptySet() : set;
-  }
-
-  @Override
-  protected void doRunTask() {
-    //noinspection ResultOfMethodCallIgnored
-    getOutputs().getPreviousOutputFiles().forEach(File::delete);
-    cliEvaluator.get().run();
   }
 }

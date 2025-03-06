@@ -29,6 +29,7 @@ import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Transformer;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.provider.Provider;
@@ -74,6 +75,7 @@ public class PklPlugin implements Plugin<Project> {
   private static final String MIN_GRADLE_VERSION = "8.2";
 
   @LateInit private Project project;
+  @LateInit private Configuration pklConfiguration;
 
   @Override
   public void apply(Project project) {
@@ -157,28 +159,22 @@ public class PklPlugin implements Plugin<Project> {
     specs.all(
         spec -> {
           configureBaseSpec(spec);
-          spec.getOutputFile()
-              .convention(
-                  project
-                      .getLayout()
-                      .getProjectDirectory()
-                      // %{moduleDir} is resolved relatively to the working directory,
-                      // and the working directory is set to the project directory,
-                      // so this path works correctly.
-                      .file("%{moduleDir}/%{moduleName}.%{outputFormat}"));
           spec.getOutputFormat().convention(OutputFormat.PCF.toString());
           spec.getModuleOutputSeparator()
               .convention(CliEvaluatorOptions.Companion.getDefaults().getModuleOutputSeparator());
-          spec.getExpression()
-              .convention(CliEvaluatorOptions.Companion.getDefaults().getExpression());
 
           createModulesTask(EvalTask.class, spec)
               .configure(
                   task -> {
                     task.getOutputFile().set(spec.getOutputFile());
+                    task.getMultipleFileOutputDir().set(spec.getMultipleFileOutputDir());
+
+                    if (!spec.getOutputFile().isPresent() && !spec.getMultipleFileOutputDir().isPresent()) {
+                      task.getOutputFile().set(project.getLayout().getProjectDirectory().file("%{moduleDir}/%{moduleName}.%{outputFormat}"));
+                    }
+
                     task.getOutputFormat().set(spec.getOutputFormat());
                     task.getModuleOutputSeparator().set(spec.getModuleOutputSeparator());
-                    task.getMultipleFileOutputDir().set(spec.getMultipleFileOutputDir());
                     task.getExpression().set(spec.getExpression());
                   });
         });
@@ -456,6 +452,7 @@ public class PklPlugin implements Plugin<Project> {
   }
 
   private <T extends BasePklTask, S extends BasePklSpec> void configureBaseTask(T task, S spec) {
+    task.setClasspath(Dependencies.getPklTools(project));
     task.getAllowedModules().set(spec.getAllowedModules());
     task.getAllowedResources().set(spec.getAllowedResources());
     task.getEnvironmentVariables().set(spec.getEnvironmentVariables());

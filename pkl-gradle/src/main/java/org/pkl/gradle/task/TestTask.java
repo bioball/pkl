@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package org.pkl.gradle.task;
 
-import java.io.PrintWriter;
+import java.util.List;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
-import org.pkl.cli.CliTestRunner;
-import org.pkl.commons.cli.CliTestOptions;
 
-public abstract class TestTask extends ModulesTask {
+public abstract class TestTask extends PklCliModulesTask {
   @Optional
   @OutputDirectory
   public abstract DirectoryProperty getJunitReportsDir();
@@ -33,14 +32,24 @@ public abstract class TestTask extends ModulesTask {
   public abstract Property<Boolean> getOverwrite();
 
   @Override
-  protected void doRunTask() {
-    new CliTestRunner(
-            getCliBaseOptions(),
-            new CliTestOptions(
-                mapAndGetOrNull(getJunitReportsDir(), it -> it.getAsFile().toPath()),
-                getOverwrite().get()),
-            new PrintWriter(System.out),
-            new PrintWriter(System.err))
-        .run();
+  @Internal
+  protected List<String> getCommandName() {
+    return List.of("test");
+  }
+
+  @Override
+  @Internal
+  protected final List<String> getExtraFlags() {
+    var flags = super.getExtraFlags();
+    applyIfNotNull(
+        getJunitReportsDir(),
+        (junitReportsDir) -> {
+          flags.add("--junit-reports");
+          flags.add(junitReportsDir.getAsFile().getAbsolutePath());
+        });
+    if (getOverwrite().getOrElse(false)) {
+      flags.add("--overwrite");
+    }
+    return flags;
   }
 }

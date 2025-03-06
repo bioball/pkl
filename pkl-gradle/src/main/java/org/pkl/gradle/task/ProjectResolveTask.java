@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package org.pkl.gradle.task;
 
 import java.io.File;
-import java.io.PrintWriter;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.InvalidUserDataException;
@@ -25,7 +23,7 @@ import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
-import org.pkl.cli.CliProjectResolver;
+import org.gradle.api.tasks.TaskAction;
 
 public abstract class ProjectResolveTask extends BasePklTask {
   @Internal
@@ -45,19 +43,33 @@ public abstract class ProjectResolveTask extends BasePklTask {
   }
 
   @Override
-  protected void doRunTask() {
-    var projectDirectories =
-        getProjectDirectories().getFiles().stream()
-            .map(it -> Path.of(it.getAbsolutePath()))
-            .collect(Collectors.toList());
-    if (projectDirectories.isEmpty()) {
+  @Internal
+  protected final List<String> getCliArguments() {
+    var ret = super.getCliArguments();
+    for (var projectDir : getProjectDirectories()) {
+      ret.add(projectDir.getAbsolutePath());
+    }
+    return ret;
+  }
+
+  @Override
+  @Internal
+  protected List<String> getCommandName() {
+    return List.of("project", "resolve");
+  }
+
+  @Override
+  @Internal
+  protected String getMainClassName() {
+    return PklCliModulesTask.PKL_CLI_MAIN_CLASS_NAME;
+  }
+
+  @Override
+  @TaskAction
+  public final void exec() {
+    if (getProjectDirectories().isEmpty()) {
       throw new InvalidUserDataException("No project directories specified.");
     }
-    new CliProjectResolver(
-            getCliBaseOptions(),
-            projectDirectories,
-            new PrintWriter(System.out),
-            new PrintWriter(System.err))
-        .run();
+    super.exec();
   }
 }

@@ -113,7 +113,7 @@ class PackageCommand : BaseCommand(name = "package", helpLink = helpLink) {
 
   private val outputPath: String by
     option(
-        names = arrayOf("--output-path"),
+        names = Flags.OUTPUT_PATH.names,
         help = "The directory to write artifacts to",
         metavar = "path",
       )
@@ -122,7 +122,7 @@ class PackageCommand : BaseCommand(name = "package", helpLink = helpLink) {
 
   private val skipPublishCheck: Boolean by
     option(
-        names = arrayOf("--skip-publish-check"),
+        names = Flags.SKIP_PUBLISH_CHECK.names,
         help = "Skip checking if a package has already been published with different contents",
       )
       .single()
