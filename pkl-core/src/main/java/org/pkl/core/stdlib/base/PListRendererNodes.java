@@ -54,7 +54,6 @@ public final class PListRendererNodes {
   }
 
   // keep in sync with org.pkl.core.PListRenderer
-  @SuppressWarnings("HttpUrlsUsage")
   private static final class PListRenderer extends AbstractRenderer {
 
     // it's safe (though not required) to escape all the following characters in XML text nodes
@@ -122,6 +121,13 @@ public final class PListRendererNodes {
           .evalError("cannotRenderType", "DataSize", "XML property list")
           .withProgramValue("Value", value)
           .build();
+    }
+
+    @Override
+    public void visitBytes(VmBytes value) {
+      builder.append("<data>");
+      builder.append(value.base64());
+      builder.append("</data>");
     }
 
     @Override

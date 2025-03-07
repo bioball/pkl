@@ -155,6 +155,11 @@ public final class RendererNodes {
     }
 
     @Override
+    public void visitBytes(VmBytes value) {
+      cannotRenderTypeAddConverter(value);
+    }
+
+    @Override
     public void visitPair(VmPair value) {
       cannotRenderTypeAddConverter(value);
     }

@@ -144,6 +144,14 @@ public class EvaluatorImpl implements Evaluator {
         });
   }
 
+  public byte[] evaluateOutputBytes(ModuleSource moduleSource) {
+    return doEvaluate(moduleSource, (module) -> {
+      var output = readModuleOutput(module);
+      var vmBytes = VmUtils.readBytesProperty(output);
+      return vmBytes.getBytes();
+    });
+  }
+
   @Override
   public Object evaluateOutputValue(ModuleSource moduleSource) {
     return doEvaluate(

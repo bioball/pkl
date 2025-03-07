@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,38 +35,30 @@ import org.pkl.core.util.Nullable;
 // of users having to deal with deferred operations that only fail later
 // perhaps we could find a compromise, e.g. realize every time a
 // property/local is read or a method parameter is set in our language
-public final class VmList extends VmCollection {
-  public static final VmList EMPTY = new VmList(RrbTree.empty());
-
-  private final ImRrbt<Object> rrbt;
-
-  private boolean forced;
-
-  private VmList(ImRrbt<Object> rrbt) {
-    this.rrbt = rrbt;
-  }
+public abstract class VmList extends VmCollection {
+  public static final VmList EMPTY = new VmGenericList(RrbTree.empty());
 
   @TruffleBoundary
   public static VmList of(Object value) {
-    return new VmList(RrbTree.emptyMutable().append(value).immutable());
+    return new VmGenericList(RrbTree.emptyMutable().append(value).immutable());
   }
 
   @TruffleBoundary
   public static VmList of(Object value1, Object value2) {
-    return new VmList(RrbTree.emptyMutable().append(value1).append(value2).immutable());
+    return new VmGenericList(RrbTree.emptyMutable().append(value1).append(value2).immutable());
   }
 
   @SuppressWarnings("unchecked")
   static VmList create(ImRrbt<?> rrbt) {
     if (rrbt.isEmpty()) return EMPTY;
-    return new VmList((ImRrbt<Object>) rrbt);
+    return new VmGenericList((ImRrbt<Object>) rrbt);
   }
 
   @TruffleBoundary
   @SuppressWarnings("unchecked")
   static VmList create(MutRrbt<?> rrbt) {
     if (rrbt.isEmpty()) return EMPTY;
-    return new VmList((ImRrbt<Object>) rrbt.immutable());
+    return new VmGenericList((ImRrbt<Object>) rrbt.immutable());
   }
 
   // keeping both `create(Iterable)` and `create(UnmodIterable)` around
@@ -85,7 +77,12 @@ public final class VmList extends VmCollection {
   @TruffleBoundary
   static VmList create(UnmodCollection<?> collection) {
     if (collection.isEmpty()) return EMPTY;
-    return new VmList(RrbTree.emptyMutable().concat(collection).immutable());
+    return new VmGenericList(RrbTree.emptyMutable().concat(collection).immutable());
+  }
+
+  @TruffleBoundary
+  public static VmList create(byte[] elements) {
+    return new VmByteArrayList(elements);
   }
 
   @TruffleBoundary
@@ -95,7 +92,7 @@ public final class VmList extends VmCollection {
     for (var elem : elements) {
       vector.append(elem);
     }
-    return new VmList(vector.immutable());
+    return new VmGenericList(vector.immutable());
   }
 
   @TruffleBoundary
@@ -105,7 +102,7 @@ public final class VmList extends VmCollection {
     for (var i = 0; i < length; i++) {
       vector.append(elements[i]);
     }
-    return new VmList(vector.immutable());
+    return new VmGenericList(vector.immutable());
   }
 
   @TruffleBoundary
@@ -116,311 +113,12 @@ public final class VmList extends VmCollection {
       assert elem instanceof ConstantNode;
       vector.append(((ConstantNode) elem).getValue());
     }
-    return new VmList(vector.immutable());
+    return new VmGenericList(vector.immutable());
   }
 
   @Override
-  public VmClass getVmClass() {
+  public final VmClass getVmClass() {
     return BaseModule.getListClass();
-  }
-
-  @Override
-  @TruffleBoundary
-  public int getLength() {
-    return rrbt.size();
-  }
-
-  @Override
-  @TruffleBoundary
-  public boolean isEmpty() {
-    return rrbt.isEmpty();
-  }
-
-  @Override
-  @TruffleBoundary
-  public boolean isLengthOne() {
-    return rrbt.size() == 1;
-  }
-
-  public long getLastIndex() {
-    return rrbt.size() - 1;
-  }
-
-  @Override
-  @TruffleBoundary
-  public VmList add(Object element) {
-    return VmList.create(rrbt.append(element));
-  }
-
-  @TruffleBoundary
-  public VmList replace(long index, Object element) {
-    return VmList.create(rrbt.replace((int) index, element));
-  }
-
-  @TruffleBoundary
-  public Object replaceOrNull(long index, Object element) {
-    if (index < 0 || index >= getLength()) {
-      return VmNull.withoutDefault();
-    }
-    return VmList.create(rrbt.replace((int) index, element));
-  }
-
-  @Override
-  @TruffleBoundary
-  public VmList concatenate(VmCollection other) {
-    return other.isEmpty() ? this : VmList.create(rrbt.concat(other));
-  }
-
-  @TruffleBoundary
-  public Object get(long index) {
-    return rrbt.get((int) index);
-  }
-
-  @TruffleBoundary
-  public Object getOrNull(long index) {
-    if (index < 0 || index >= getLength()) {
-      return VmNull.withoutDefault();
-    }
-    return rrbt.get((int) index);
-  }
-
-  @TruffleBoundary
-  public VmList subList(long start, long exclusiveEnd) {
-    return VmList.create(rrbt.subList((int) start, (int) exclusiveEnd));
-  }
-
-  @TruffleBoundary
-  public Object subListOrNull(long start, long exclusiveEnd) {
-    var length = getLength();
-
-    if (start < 0 || start > length) {
-      return VmNull.withoutDefault();
-    }
-    if (exclusiveEnd < start || exclusiveEnd > length) {
-      return VmNull.withoutDefault();
-    }
-    return VmList.create(rrbt.subList((int) start, (int) exclusiveEnd));
-  }
-
-  @Override
-  public Iterator<Object> iterator() {
-    if (rrbt.isEmpty()) return Iterators.emptyTruffleIterator();
-    return new TruffleIterator<>(rrbt);
-  }
-
-  @Override
-  public Iterator<Object> reverseIterator() {
-    if (rrbt.isEmpty()) return Iterators.emptyTruffleIterator();
-    return new ReverseTruffleIterator<>(rrbt);
-  }
-
-  @Override
-  @TruffleBoundary
-  public VmCollection.Builder<VmList> builder() {
-    return new Builder();
-  }
-
-  @TruffleBoundary
-  public Object getFirst() {
-    checkNonEmpty();
-    return rrbt.get(0);
-  }
-
-  @TruffleBoundary
-  public Object getFirstOrNull() {
-    if (rrbt.isEmpty()) return VmNull.withoutDefault();
-    return rrbt.get(0);
-  }
-
-  @TruffleBoundary
-  public VmList getRest() {
-    checkNonEmpty();
-    return VmList.create(rrbt.drop(1));
-  }
-
-  @TruffleBoundary
-  public Object getRestOrNull() {
-    if (rrbt.isEmpty()) return VmNull.withoutDefault();
-    return VmList.create(rrbt.drop(1));
-  }
-
-  @TruffleBoundary
-  public Object getLast() {
-    checkNonEmpty();
-    return rrbt.get(rrbt.size() - 1);
-  }
-
-  @TruffleBoundary
-  public Object getLastOrNull() {
-    if (isEmpty()) return VmNull.withoutDefault();
-    return rrbt.get(rrbt.size() - 1);
-  }
-
-  @TruffleBoundary
-  public Object getSingle() {
-    checkLengthOne();
-    return rrbt.get(0);
-  }
-
-  @TruffleBoundary
-  public Object getSingleOrNull() {
-    if (!isLengthOne()) return VmNull.withoutDefault();
-    return rrbt.get(0);
-  }
-
-  @TruffleBoundary
-  @SuppressWarnings("deprecation")
-  public boolean contains(Object element) {
-    return rrbt.contains(element);
-  }
-
-  @TruffleBoundary
-  public long indexOf(Object elem) {
-    return rrbt.indexOf(elem);
-  }
-
-  @TruffleBoundary
-  public Object indexOfOrNull(Object elem) {
-    long result = rrbt.indexOf(elem);
-    if (result == -1) return VmNull.withoutDefault();
-    return result;
-  }
-
-  @TruffleBoundary
-  public long lastIndexOf(Object elem) {
-    return rrbt.lastIndexOf(elem);
-  }
-
-  @TruffleBoundary
-  public Object lastIndexOfOrNull(Object elem) {
-    long result = rrbt.lastIndexOf(elem);
-    if (result == -1) return VmNull.withoutDefault();
-    return result;
-  }
-
-  @TruffleBoundary
-  public VmPair split(long index) {
-    var tuple = rrbt.split((int) index);
-    return new VmPair(VmList.create(tuple._1()), VmList.create(tuple._2()));
-  }
-
-  @TruffleBoundary
-  public Object splitOrNull(long index) {
-    if (index < 0 || index > getLength()) {
-      return VmNull.withoutDefault();
-    }
-    return split(index);
-  }
-
-  @TruffleBoundary
-  public VmList take(long n) {
-    if (n == 0) return EMPTY;
-    if (n >= rrbt.size()) return this;
-
-    checkPositive(n);
-    return VmList.create(rrbt.take(n));
-  }
-
-  @TruffleBoundary
-  public VmList takeLast(long n) {
-    if (n == 0) return EMPTY;
-    if (n >= rrbt.size()) return this;
-
-    checkPositive(n);
-    return VmList.create(rrbt.drop(rrbt.size() - n));
-  }
-
-  @TruffleBoundary
-  public VmList drop(long n) {
-    if (n == 0) return this;
-    if (n >= rrbt.size()) return EMPTY;
-
-    checkPositive(n);
-    return VmList.create(rrbt.drop(n));
-  }
-
-  @TruffleBoundary
-  public VmList dropLast(long n) {
-    if (n == 0) return this;
-    if (n >= rrbt.size()) return EMPTY;
-
-    checkPositive(n);
-    return VmList.create(rrbt.take(rrbt.size() - n));
-  }
-
-  @TruffleBoundary
-  public VmList repeat(long n) {
-    if (n == 0) return EMPTY;
-    if (n == 1) return this;
-
-    checkPositive(n);
-
-    var result = rrbt.mutable();
-    for (var i = 1; i < n; i++) {
-      result = result.concat(rrbt);
-    }
-    return VmList.create(result);
-  }
-
-  @TruffleBoundary
-  public VmList reverse() {
-    return VmList.create(rrbt.reverse());
-  }
-
-  @TruffleBoundary
-  public Object[] toArray() {
-    return rrbt.toArray();
-  }
-
-  public VmList toList() {
-    return this;
-  }
-
-  @TruffleBoundary
-  public VmSet toSet() {
-    if (rrbt.isEmpty()) return VmSet.EMPTY;
-    return VmSet.create(rrbt);
-  }
-
-  @TruffleBoundary
-  public VmListing toListing() {
-    var builder = new VmObjectBuilder(rrbt.size());
-    for (var elem : rrbt) builder.addElement(elem);
-    return builder.toListing();
-  }
-
-  @TruffleBoundary
-  public VmDynamic toDynamic() {
-    var builder = new VmObjectBuilder(rrbt.size());
-    for (var elem : rrbt) builder.addElement(elem);
-    return builder.toDynamic();
-  }
-
-  @Override
-  @TruffleBoundary
-  public void force(boolean allowUndefinedValues) {
-    if (forced) return;
-
-    forced = true;
-
-    try {
-      for (var elem : rrbt) {
-        VmValue.force(elem, allowUndefinedValues);
-      }
-    } catch (Throwable t) {
-      forced = false;
-      throw t;
-    }
-  }
-
-  @Override
-  @TruffleBoundary
-  public List<Object> export() {
-    var result = new ArrayList<>(rrbt.size());
-    for (var elem : rrbt) {
-      result.add(VmValue.export(elem));
-    }
-    return result;
   }
 
   @Override
@@ -433,39 +131,83 @@ public final class VmList extends VmCollection {
     return converter.convertList(this, path);
   }
 
-  @Override
-  @TruffleBoundary
-  public boolean equals(@Nullable Object other) {
-    if (this == other) return true;
-    //noinspection SimplifiableIfStatement
-    if (!(other instanceof VmList list)) return false;
-    return rrbt.equals(list.rrbt);
+  public abstract VmList replace(long index, Object element);
+
+  public abstract Object replaceOrNull(long index, Object element);
+
+  public abstract Object get(long index);
+
+  public abstract Object getOrNull(long index);
+
+  public abstract VmList subList(long start, long exclusiveEnd);
+
+  public abstract Iterator<Object> iterator();
+
+  public abstract Iterator<Object> reverseIterator();
+
+  public final Object getFirst() {
+    checkNonEmpty();
+    return get(0);
   }
 
-  @Override
-  @TruffleBoundary
-  public int hashCode() {
-    return rrbt.hashCode();
+  public final Object getFirstOrNull() {
+    if (isEmpty()) return VmNull.withoutDefault();
+    return get(0);
   }
 
-  private static final class Builder implements VmCollection.Builder<VmList> {
-    private final MutRrbt<Object> list = RrbTree.emptyMutable();
+  public abstract VmList getRest();
 
-    @Override
-    @TruffleBoundary
-    public void add(Object element) {
-      list.append(element);
-    }
+  public abstract Object getRestOrNull();
 
-    @Override
-    @TruffleBoundary
-    public void addAll(Iterable<?> elements) {
-      list.concat(elements);
-    }
+  public abstract Object getLast();
 
-    @Override
-    public VmList build() {
-      return VmList.create(list);
-    }
+  public abstract Object getLastOrNull();
+
+  public final Object getSingle() {
+    checkLengthOne();
+    return get(0);
   }
+
+  public final Object getSingleOrNull() {
+    if (!isLengthOne()) return VmNull.withoutDefault();
+    return get(0);
+  }
+
+  public abstract boolean contains(Object element);
+
+  public abstract long indexOf(Object elem);
+  
+  public abstract Object indexOfOrNull(Object elem);
+
+  public abstract long lastIndexOf(Object elem);
+
+  public abstract Object lastIndexOfOrNull(Object elem);
+  
+  public abstract VmPair split(long index);
+
+  public abstract Object splitOrNull(long index);
+
+  public abstract VmList take(long n);
+
+  public abstract VmList takeLast(long n);
+
+  public abstract VmList drop(long n);
+
+  public abstract VmList dropLast(long n);
+
+  public abstract VmList repeat(long n);
+
+  public abstract VmList reverse();
+
+  public abstract Object[] toArray();
+
+  public final VmList toList() {
+    return this;
+  }
+
+  public abstract VmSet toSet();
+
+  public abstract VmListing toListing();
+
+  public abstract VmDynamic toDynamic();
 }

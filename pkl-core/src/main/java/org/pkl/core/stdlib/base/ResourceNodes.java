@@ -20,6 +20,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import java.util.*;
 import org.pkl.core.resource.Resource;
 import org.pkl.core.runtime.Identifier;
+import org.pkl.core.runtime.VmBytes;
 import org.pkl.core.runtime.VmTyped;
 import org.pkl.core.runtime.VmUtils;
 import org.pkl.core.stdlib.ExternalPropertyNode;
@@ -27,76 +28,24 @@ import org.pkl.core.util.ByteArrayUtils;
 
 public final class ResourceNodes {
   private ResourceNodes() {}
-
-  public abstract static class md5 extends ExternalPropertyNode {
-    @TruffleBoundary
+  
+  public abstract static class bytes extends ExternalPropertyNode {
     @Specialization(guards = "self.hasExtraStorage()")
-    protected String evalWithExtraStorage(VmTyped self) {
+    protected VmBytes evalWithExtraStorage(VmTyped self) {
       var resource = (Resource) self.getExtraStorage();
-      return ByteArrayUtils.md5(resource.bytes());
+      return new VmBytes(resource.bytes());
     }
 
     @TruffleBoundary
     @Specialization(guards = "!self.hasExtraStorage()")
-    protected String evalWithoutExtraStorage(VmTyped self) {
+    protected VmBytes evalWithoutExtraStorage(VmTyped self) {
       // `pkl.base#Resource` is designed to allow direct instantiation,
       // in which case it isn't backed by a `org.pkl.core.resource.Resource`.
       // It seems the best we can do here
       // is to expect `pkl.base#Resource.base64` to be set and decode it.
       var base64 = (String) VmUtils.readMember(self, Identifier.BASE64);
       var bytes = Base64.getDecoder().decode(base64);
-      return ByteArrayUtils.md5(bytes);
-    }
-  }
-
-  public abstract static class sha1 extends ExternalPropertyNode {
-    @TruffleBoundary
-    @Specialization(guards = "self.hasExtraStorage()")
-    protected String evalWithExtraStorage(VmTyped self) {
-      var resource = (Resource) self.getExtraStorage();
-      return ByteArrayUtils.sha1(resource.bytes());
-    }
-
-    @TruffleBoundary
-    @Specialization(guards = "!self.hasExtraStorage()")
-    protected String evalWithoutExtraStorage(VmTyped self) {
-      var base64 = (String) VmUtils.readMember(self, Identifier.BASE64);
-      var bytes = Base64.getDecoder().decode(base64);
-      return ByteArrayUtils.sha1(bytes);
-    }
-  }
-
-  public abstract static class sha256 extends ExternalPropertyNode {
-    @TruffleBoundary
-    @Specialization(guards = "self.hasExtraStorage()")
-    protected String evalWithExtraStorage(VmTyped self) {
-      var resource = (Resource) self.getExtraStorage();
-      return ByteArrayUtils.sha256(resource.bytes());
-    }
-
-    @TruffleBoundary
-    @Specialization(guards = "!self.hasExtraStorage()")
-    protected String evalWithoutExtraStorage(VmTyped self) {
-      var base64 = (String) VmUtils.readMember(self, Identifier.BASE64);
-      var bytes = Base64.getDecoder().decode(base64);
-      return ByteArrayUtils.sha256(bytes);
-    }
-  }
-
-  public abstract static class sha256Int extends ExternalPropertyNode {
-    @TruffleBoundary
-    @Specialization(guards = "self.hasExtraStorage()")
-    protected long evalWithExtraStorage(VmTyped self) {
-      var resource = (Resource) self.getExtraStorage();
-      return ByteArrayUtils.sha256Int(resource.bytes());
-    }
-
-    @TruffleBoundary
-    @Specialization(guards = "!self.hasExtraStorage()")
-    protected long evalWithoutExtraStorage(VmTyped self) {
-      var base64 = (String) VmUtils.readMember(self, Identifier.BASE64);
-      var bytes = Base64.getDecoder().decode(base64);
-      return ByteArrayUtils.sha256Int(bytes);
+      return new VmBytes(bytes);
     }
   }
 }

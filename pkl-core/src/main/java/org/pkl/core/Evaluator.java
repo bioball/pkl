@@ -15,6 +15,7 @@
  */
 package org.pkl.core;
 
+import java.io.OutputStream;
 import java.util.Map;
 import org.pkl.core.runtime.VmEvalException;
 
@@ -52,6 +53,15 @@ public interface Evaluator extends AutoCloseable {
    * @throws IllegalStateException if this evaluator has already been closed
    */
   String evaluateOutputText(ModuleSource moduleSource);
+
+  /**
+   * Evaluates a module's {@code output.bytes} property.
+   *
+   * @throws PklException if an error occurs during evaluation
+   * @throws IllegalStateException if this evaluator has already been closed
+   * @since 0.29.0
+   */
+  byte[] evaluateOutputBytes(ModuleSource moduleSource);
 
   /**
    * Evaluates a module's {@code output.value} property.
@@ -142,6 +152,10 @@ public interface Evaluator extends AutoCloseable {
    *     <tr>
    *       <td>TypeAlias</td>
    *       <td>{@link TypeAlias}</td>
+   *     </tr>
+   *     <tr>
+   *       <td>Bytes</td>
+   *       <td>{@code byte[]}</td>
    *     </tr>
    *   </tbody>
    * </table>

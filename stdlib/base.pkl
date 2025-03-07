@@ -217,8 +217,12 @@ open class FileOutput {
   /// The renderer for [value].
   renderer: ValueRenderer = new PcfRenderer {}
 
-  /// The final rendered output.
+  /// The textual rendered output.
   text: String = renderer.renderDocument(value)
+
+  /// The underlying byte array of [text], in UTF-8 encoding.
+  @Since { version = "0.29.0" }
+  bytes: Bytes = text.toBytes()
 }
 
 /// The contents and appearance of a module's output.
@@ -513,28 +517,37 @@ class Resource {
   /// The text content of this resource.
   text: String
 
+  /// The bytes of this resource.
+  @Since { version = "0.29.0" }
+  bytes: Bytes
+
   /// The content of this resource in Base64.
-  base64: String
+  @Deprecated { since = "0.29.0"; replaceWith = "bytes.base64" }
+  base64: String = bytes.base64
 
   /// The [MD5](https://en.wikipedia.org/wiki/MD5)
   /// hash of this resource as hexadecimal string.
   ///
   /// MD5 is cryptographically broken and should not be used for secure applications.
-  external md5: String
+  @Deprecated { since = "0.29.0"; replaceWith = "bytes.md5" }
+  hidden fixed md5: String = bytes.md5
 
   /// The [SHA-1](https://en.wikipedia.org/wiki/SHA-1)
   /// hash of this resource as hexadecimal string.
   ///
   /// SHA-1 is cryptographically broken and should not be used for secure applications.
-  external sha1: String
+  @Deprecated { since = "0.29.0"; replaceWith = "bytes.sha1" }
+  hidden fixed sha1: String = bytes.md5
 
   /// The [SHA-256](https://en.wikipedia.org/wiki/SHA-2)
   /// cryptographic hash of this resource as hexadecimal string.
-  external sha256: String
+  @Deprecated { since = "0.29.0"; replaceWith = "bytes.sha256" }
+  hidden fixed sha256: String = bytes.md5
 
   /// The first 64 bits of the [SHA-256](https://en.wikipedia.org/wiki/SHA-2)
   /// cryptographic hash of this resource.
-  external sha256Int: Int
+  @Deprecated { since = "0.29.0"; replaceWith = "bytes.sha256Int" }
+  hidden fixed sha256Int: Int = bytes.sha256Int
 }
 
 /// Common base class of [Int] and [Float].
@@ -1123,6 +1136,16 @@ external class String extends Any {
   /// Tells if this string is a valid regular expression according to [Regex].
   external isRegex: Boolean
 
+  /// Tells if this is a valid base64-encoded string.
+  ///
+  /// Facts:
+  /// ```
+  /// "AQIDBA==".isBase64
+  /// !"hello there".isBase64
+  /// ```
+  @Since { version = "0.29.0" }
+  external isBase64: Boolean
+
   /// The [MD5](https://en.wikipedia.org/wiki/MD5)
   /// hash of this string's UTF-8 byte sequence
   /// as hexadecimal string.
@@ -1433,7 +1456,18 @@ external class String extends Any {
   ///
   /// Returns [null] if this string is neither `"true"` nor `"false"` (case-insensitive).
   external function toBooleanOrNull(): Boolean?
+
+  /// Returns the bytes of this string, encoded using UTF-8.
+  @Since { version = "0.29.0" }
+  function toBytes(): Bytes = toBytesWithCharset("UTF-8")
+
+  /// Returns the bytes of this string, encoded using [charset]. 
+  @Since { version = "0.29.0" }
+  external function toBytesWithCharset(charset: Charset): Bytes
 }
+
+@Since { version = "0.29.0" }
+typealias Charset = "UTF-8"|"UTF-16"|"ISO-8859-1"
 
 /// A string representing a [URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier).
 typealias Uri = String
@@ -3282,4 +3316,59 @@ external class Map<out Key, out Value> extends Any {
 
   /// Converts this map to a [Mapping].
   external function toMapping(): Mapping<Key, Value>
+}
+
+/// Creates [Bytes] from either a list of bytes, or a Base64 encoded string.
+///
+/// Examples:
+/// ```
+/// // Create Bytes from integer literals
+/// bytes1 = Bytes(List(1, 2, 3, 4))
+/// 
+/// // Create Bytes from a Base64 encoded string
+/// bytes2 = Bytes("AQIDBA==") 
+/// ```
+@Since { version = "0.29.0" }
+external const function Bytes(values: VarArgs<UInt8>): Bytes
+
+/// Binary data.
+///
+/// Two [Bytes] can be concatenated with the `+` operator.
+@Since { version = "0.29.0" }
+external class Bytes extends Any {
+  /// The length of these bytes
+  external length: Int
+
+  /// The value represented by these bytes, in base64 encoding.
+  external base64: String(isBase64)
+
+  /// The value represented by these bytes, in hexadecimal encoding.
+  external hex: String
+
+  /// The [MD5](https://en.wikipedia.org/wiki/MD5) hash of these bytes as hexadecimal string.
+  ///
+  /// MD5 is cryptographically broken and should not be used for secure applications.
+  external md5: String
+
+  /// The [SHA-1](https://en.wikipedia.org/wiki/SHA-1) hash of these bytes as hexadecimal string.
+  ///
+  /// SHA-1 is cryptographically broken and should not be used for secure applications.
+  external sha1: String
+
+  /// The [SHA-256](https://en.wikipedia.org/wiki/SHA-2) cryptographic hash of these bytes as
+  /// hexadecimal string.
+  external sha256: String
+
+  /// The first 64 bits of the [SHA-256](https://en.wikipedia.org/wiki/SHA-2) cryptographic hash of
+  /// these bytes.
+  external sha256Int: Int
+
+  /// Converts these bytes into a string using UTF-8 encoding.
+  external function encodeToString(): String = encodeToStringWithCharset("UTF-8")
+
+  /// Converts these bytes into a string, encoded using [charset].
+  external function encodeToStringWithCharset(charset: Charset): String
+
+  /// Returns these bytes as a list.
+  external function toList(): List<UInt8>
 }

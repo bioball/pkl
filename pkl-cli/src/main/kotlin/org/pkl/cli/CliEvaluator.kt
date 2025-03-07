@@ -29,6 +29,7 @@ import org.pkl.commons.cli.CliException
 import org.pkl.commons.currentWorkingDir
 import org.pkl.commons.writeString
 import org.pkl.core.Closeables
+import org.pkl.core.Evaluator
 import org.pkl.core.EvaluatorBuilder
 import org.pkl.core.ModuleSource
 import org.pkl.core.PklException
@@ -37,6 +38,8 @@ import org.pkl.core.runtime.ModuleResolver
 import org.pkl.core.runtime.VmException
 import org.pkl.core.runtime.VmUtils
 import org.pkl.core.util.IoUtils
+import java.io.OutputStream
+import kotlin.io.path.writeBytes
 
 private data class OutputFile(val pathSpec: String, val moduleUri: URI)
 
@@ -137,11 +140,30 @@ constructor(
       absolutePath
     }
   }
+  
+  private fun Evaluator.writeOutput(moduleSource: ModuleSource, writeTo: Path): Boolean {
+    if (options.expression == null) {
+      val bytes = evaluateOutputBytes(moduleSource)
+      writeTo.writeBytes(bytes)
+      return bytes.isNotEmpty()
+    }
+    val text = evaluateExpressionString(moduleSource, options.expression)
+    writeTo.writeString(text)
+    return text.isNotEmpty()
+  }
+
+  private fun Evaluator.evalOutput(moduleSource: ModuleSource): ByteArray {
+    if (options.expression == null) {
+      val bytes = evaluateOutputBytes(moduleSource)
+      return bytes
+    }
+    return evaluateExpressionString(moduleSource, options.expression).toByteArray()
+  }
 
   /** Renders each module's `output.text`, writing it to the specified output file. */
   private fun writeOutput(builder: EvaluatorBuilder) {
     val evaluator = builder.setOutputFormat(options.outputFormat).build()
-    evaluator.use {
+    evaluator.use { ev ->
       val outputFiles = fileOutputPaths
       if (outputFiles != null) {
         // files that we've written non-empty output to
@@ -151,15 +173,15 @@ constructor(
 
         for ((moduleUri, outputFile) in outputFiles) {
           val moduleSource = toModuleSource(moduleUri, consoleReader)
-          val output = evaluator.evaluateExpressionString(moduleSource, options.expression)
+//          val output = evaluator.evaluateExpressionString(moduleSource, options.expression)
           outputFile.createParentDirectories()
           if (!writtenFiles.contains(outputFile)) {
             // write file even if output is empty to overwrite output from previous runs
-            outputFile.writeString(output)
-            if (output.isNotEmpty()) {
+            if (ev.writeOutput(moduleSource, outputFile)) {
               writtenFiles.add(outputFile)
             }
           } else {
+            val output = ev.evalOutput(moduleSource)
             if (output.isNotEmpty()) {
               outputFile.writeString(
                 options.moduleOutputSeparator + '\n',
@@ -167,9 +189,8 @@ constructor(
                 StandardOpenOption.WRITE,
                 StandardOpenOption.APPEND,
               )
-              outputFile.writeString(
+              outputFile.writeBytes(
                 output,
-                Charsets.UTF_8,
                 StandardOpenOption.WRITE,
                 StandardOpenOption.APPEND,
               )

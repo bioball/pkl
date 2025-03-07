@@ -98,6 +98,11 @@ public abstract class SubscriptNode extends BinaryExpressionNode {
     return readMember(dynamic, key, callNode);
   }
 
+  @Specialization
+  protected long eval(VmBytes receiver, long index) {
+    return receiver.getBytes()[(int) index];
+  }
+
   private Object readMember(VmObject object, Object key, IndirectCallNode callNode) {
     var result = VmUtils.readMemberOrNull(object, key, callNode);
     if (result != null) return result;

@@ -127,6 +127,11 @@ public final class JsonRendererNodes {
     }
 
     @Override
+    public void visitBytes(VmBytes value) {
+      cannotRenderTypeAddConverter(value);
+    }
+
+    @Override
     public void visitRegex(VmRegex value) {
       cannotRenderTypeAddConverter(value);
     }
