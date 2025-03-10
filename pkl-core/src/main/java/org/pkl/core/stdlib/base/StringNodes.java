@@ -168,7 +168,7 @@ public final class StringNodes {
     @Specialization
     @TruffleBoundary
     protected VmList eval(String self) {
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       self.codePoints().forEach(cp -> builder.add(Character.toString(cp)));
       return builder.build();
     }
@@ -178,7 +178,7 @@ public final class StringNodes {
     @Specialization
     @TruffleBoundary
     protected VmList eval(String self) {
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       self.codePoints().forEach(cp -> builder.add((long) cp));
       return builder.build();
     }
@@ -751,13 +751,13 @@ public final class StringNodes {
     @Specialization
     protected VmList eval(String self, String separator) {
       var parts = self.split(Pattern.quote(separator));
-      return VmList.create(parts);
+      return VmGenericList.create(parts);
     }
 
     @TruffleBoundary
     @Specialization
     protected VmList eval(String self, VmRegex separator) {
-      return VmList.create(separator.getPattern().split(self));
+      return VmGenericList.create(separator.getPattern().split(self));
     }
   }
 
@@ -766,14 +766,14 @@ public final class StringNodes {
     @Specialization
     protected VmList eval(String self, String separator, long limit) {
       var parts = self.split(Pattern.quote(separator), (int) limit);
-      return VmList.create(parts);
+      return VmGenericList.create(parts);
     }
 
     @TruffleBoundary
     @Specialization
     protected VmList eval(String self, VmRegex separator, long limit) {
       var parts = separator.getPattern().split(self, (int) limit);
-      return VmList.create(parts);
+      return VmGenericList.create(parts);
     }
   }
 
@@ -935,7 +935,7 @@ public final class StringNodes {
     }
   }
 
-  public abstract static class toBytesWithEncoding extends ExternalMethod1Node {
+  public abstract static class toBytesWithCharset extends ExternalMethod1Node {
     @TruffleBoundary
     @Specialization
     protected VmBytes eval(String self, String charsetName) {

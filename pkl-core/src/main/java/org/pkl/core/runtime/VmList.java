@@ -16,18 +16,11 @@
 package org.pkl.core.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Objects;
 import org.organicdesign.fp.collections.RrbTree;
-import org.organicdesign.fp.collections.RrbTree.ImRrbt;
-import org.organicdesign.fp.collections.RrbTree.MutRrbt;
-import org.organicdesign.fp.collections.UnmodCollection;
-import org.organicdesign.fp.collections.UnmodIterable;
 import org.pkl.core.ast.ConstantNode;
 import org.pkl.core.ast.ExpressionNode;
-import org.pkl.core.runtime.Iterators.ReverseTruffleIterator;
-import org.pkl.core.runtime.Iterators.TruffleIterator;
 import org.pkl.core.util.Nullable;
 
 // currently the backing collection is realized at the end of each VmList operation
@@ -36,8 +29,6 @@ import org.pkl.core.util.Nullable;
 // perhaps we could find a compromise, e.g. realize every time a
 // property/local is read or a method parameter is set in our language
 public abstract class VmList extends VmCollection {
-  public static final VmList EMPTY = new VmGenericList(RrbTree.empty());
-
   @TruffleBoundary
   public static VmList of(Object value) {
     return new VmGenericList(RrbTree.emptyMutable().append(value).immutable());
@@ -48,72 +39,9 @@ public abstract class VmList extends VmCollection {
     return new VmGenericList(RrbTree.emptyMutable().append(value1).append(value2).immutable());
   }
 
-  @SuppressWarnings("unchecked")
-  static VmList create(ImRrbt<?> rrbt) {
-    if (rrbt.isEmpty()) return EMPTY;
-    return new VmGenericList((ImRrbt<Object>) rrbt);
-  }
-
-  @TruffleBoundary
-  @SuppressWarnings("unchecked")
-  static VmList create(MutRrbt<?> rrbt) {
-    if (rrbt.isEmpty()) return EMPTY;
-    return new VmGenericList((ImRrbt<Object>) rrbt.immutable());
-  }
-
-  // keeping both `create(Iterable)` and `create(UnmodIterable)` around
-  // allows to easily find call sites that create a VmList
-  // from a non-Paguro collection (which should be rare)
-  @TruffleBoundary
-  public static VmList create(Iterable<?> iterable) {
-    return create(RrbTree.emptyMutable().concat(iterable).immutable());
-  }
-
-  @SuppressWarnings("unchecked")
-  static VmList create(UnmodIterable<?> iterable) {
-    return create((Iterable<Object>) iterable);
-  }
-
-  @TruffleBoundary
-  static VmList create(UnmodCollection<?> collection) {
-    if (collection.isEmpty()) return EMPTY;
-    return new VmGenericList(RrbTree.emptyMutable().concat(collection).immutable());
-  }
-
   @TruffleBoundary
   public static VmList create(byte[] elements) {
     return new VmByteArrayList(elements);
-  }
-
-  @TruffleBoundary
-  public static VmList create(Object[] elements) {
-    if (elements.length == 0) return EMPTY;
-    var vector = RrbTree.emptyMutable();
-    for (var elem : elements) {
-      vector.append(elem);
-    }
-    return new VmGenericList(vector.immutable());
-  }
-
-  @TruffleBoundary
-  public static VmList create(Object[] elements, int length) {
-    if (elements.length == 0) return EMPTY;
-    var vector = RrbTree.emptyMutable();
-    for (var i = 0; i < length; i++) {
-      vector.append(elements[i]);
-    }
-    return new VmGenericList(vector.immutable());
-  }
-
-  @TruffleBoundary
-  public static VmList createFromConstantNodes(ExpressionNode[] elements) {
-    if (elements.length == 0) return EMPTY;
-    var vector = RrbTree.emptyMutable();
-    for (var elem : elements) {
-      assert elem instanceof ConstantNode;
-      vector.append(((ConstantNode) elem).getValue());
-    }
-    return new VmGenericList(vector.immutable());
   }
 
   @Override
@@ -131,19 +59,39 @@ public abstract class VmList extends VmCollection {
     return converter.convertList(this, path);
   }
 
+  public abstract VmList add(Object element);
+
   public abstract VmList replace(long index, Object element);
 
   public abstract Object replaceOrNull(long index, Object element);
 
   public abstract Object get(long index);
 
-  public abstract Object getOrNull(long index);
+  public final Object getOrNull(long index) {
+    if (index < 0 || index >= getLength()) {
+      return VmNull.withoutDefault();
+    }
+    return get(index);
+  }
 
   public abstract VmList subList(long start, long exclusiveEnd);
 
-  public abstract Iterator<Object> iterator();
+  public final Object subListOrNull(long start, long exclusiveEnd) {
+    var length = getLength();
 
-  public abstract Iterator<Object> reverseIterator();
+    if (start < 0 || start > length) {
+      return VmNull.withoutDefault();
+    }
+    if (exclusiveEnd < start || exclusiveEnd > length) {
+      return VmNull.withoutDefault();
+    }
+    return subList(start, exclusiveEnd);
+  }
+
+  @Override
+  public final Builder<VmList> builder() {
+    return new VmListBuilder();
+  }
 
   public final Object getFirst() {
     checkNonEmpty();
@@ -157,11 +105,17 @@ public abstract class VmList extends VmCollection {
 
   public abstract VmList getRest();
 
-  public abstract Object getRestOrNull();
+  public final Object getRestOrNull() {
+    if (isEmpty()) return VmNull.withoutDefault();
+    return getRest();
+  }
 
   public abstract Object getLast();
 
-  public abstract Object getLastOrNull();
+  public final Object getLastOrNull() {
+    if (isEmpty()) return VmNull.withoutDefault();
+    return getLast();
+  }
 
   public final Object getSingle() {
     checkLengthOne();
@@ -177,15 +131,32 @@ public abstract class VmList extends VmCollection {
 
   public abstract long indexOf(Object elem);
   
-  public abstract Object indexOfOrNull(Object elem);
+  public final Object indexOfOrNull(Object elem) {
+    var index = indexOf(elem);
+    if (index == -1) {
+      return VmNull.withoutDefault();
+    }
+    return index;
+  }
 
   public abstract long lastIndexOf(Object elem);
 
-  public abstract Object lastIndexOfOrNull(Object elem);
-  
+  public final Object lastIndexOfOrNull(Object elem) {
+    var index = lastIndexOf(elem);
+    if (index == -1) {
+      return VmNull.withoutDefault();
+    }
+    return index;
+  }
+
   public abstract VmPair split(long index);
 
-  public abstract Object splitOrNull(long index);
+  public final Object splitOrNull(long index) {
+    if (index < 0 || index > getLength()) {
+      return VmNull.withoutDefault();
+    }
+    return split(index);
+  }
 
   public abstract VmList take(long n);
 
@@ -210,4 +181,16 @@ public abstract class VmList extends VmCollection {
   public abstract VmListing toListing();
 
   public abstract VmDynamic toDynamic();
+
+  protected boolean equalsList(VmList other) {
+    if (getLength() != other.getLength()) {
+      return false;
+    }
+    for (var i = 0; i < getLength(); i++) {
+      if (!(Objects.equals(get(i), other.get(i)))) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

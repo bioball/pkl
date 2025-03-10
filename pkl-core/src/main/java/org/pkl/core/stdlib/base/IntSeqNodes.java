@@ -81,7 +81,7 @@ public final class IntSeqNodes {
 
     @Specialization
     protected VmList eval(VmIntSeq self, VmFunction function) {
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       var iterator = self.iterator();
       while (iterator.hasNext()) {
         builder.add(applyLambdaNode.execute(function, iterator.nextLong()));
@@ -95,7 +95,7 @@ public final class IntSeqNodes {
     @Specialization
     @TruffleBoundary
     protected VmList eval(VmIntSeq self) {
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       var iterator = self.iterator();
       while (iterator.hasNext()) {
         builder.add(iterator.nextLong());

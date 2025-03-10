@@ -941,7 +941,7 @@ public final class SetNodes {
 
     @Specialization
     protected VmList eval(VmSet self) {
-      return VmList.create(MergeSort.sort(self.toArray(), compareNode, null));
+      return VmGenericList.create(MergeSort.sort(self.toArray(), compareNode, null));
     }
   }
 
@@ -950,7 +950,7 @@ public final class SetNodes {
 
     @Specialization
     protected VmList eval(VmSet self, VmFunction selector) {
-      return VmList.create(MergeSort.sort(self.toArray(), compareByNode, selector));
+      return VmGenericList.create(MergeSort.sort(self.toArray(), compareByNode, selector));
     }
   }
 
@@ -959,7 +959,7 @@ public final class SetNodes {
 
     @Specialization
     protected VmList eval(VmSet self, VmFunction function) {
-      return VmList.create(MergeSort.sort(self.toArray(), compareWithNode, function));
+      return VmGenericList.create(MergeSort.sort(self.toArray(), compareWithNode, function));
     }
   }
 

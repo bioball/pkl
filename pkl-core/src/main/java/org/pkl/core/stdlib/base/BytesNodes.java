@@ -17,21 +17,27 @@ package org.pkl.core.stdlib.base;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import org.pkl.core.PklBugException;
 import org.pkl.core.runtime.VmBytes;
 import org.pkl.core.runtime.VmList;
-import org.pkl.core.stdlib.ExternalMethod0Node;
+import org.pkl.core.stdlib.ExternalMethod1Node;
 import org.pkl.core.stdlib.ExternalPropertyNode;
 import org.pkl.core.util.ByteArrayUtils;
 
 public final class BytesNodes {
   private BytesNodes() {}
 
-  public abstract static class toList extends ExternalMethod0Node {
+  public abstract static class value extends ExternalPropertyNode {
     @Specialization
     protected VmList eval(VmBytes self) {
       return self.vmList();
+    }
+  }
+
+  public abstract static class length extends ExternalPropertyNode {
+    @Specialization
+    protected long eval(VmBytes self) {
+      return self.getBytes().length;
     }
   }
 
@@ -77,7 +83,7 @@ public final class BytesNodes {
     }
   }
 
-  public abstract static class encodeToStringWithCharset extends ExternalMethod0Node {
+  public abstract static class encodeToStringWithCharset extends ExternalMethod1Node {
     @Specialization
     protected String eval(VmBytes self, String charset) {
       try {

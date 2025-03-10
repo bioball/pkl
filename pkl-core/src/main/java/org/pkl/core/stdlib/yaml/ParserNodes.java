@@ -103,7 +103,7 @@ public final class ParserNodes {
     private VmList doParseAll(VmTyped self, String text, String uri) {
       var converter = createConverter(self);
       var load = createLoad(self, text, uri, converter);
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
 
       try {
         for (var document : load.loadAllFromString(text)) {

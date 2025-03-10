@@ -1,44 +1,27 @@
 package org.pkl.core.runtime;
 
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.function.Consumer;
 import org.organicdesign.fp.collections.RrbTree;
-import org.pkl.core.runtime.Iterators.ReverseTruffleIterator;
-import org.pkl.core.runtime.Iterators.TruffleIterator;
 
+/**
+ * Efficient implementation of a {@code VmList} that is backed by a byte array.
+ *
+ * Need to cast to `long`, because the rest of the codebase uses `long/Long` to represent numbers.
+ */
 public class VmByteArrayList extends VmList {
-  private final ByteBuffer byteBuffer;
+  final byte[] bytes;
   
-  private final int length;
-
   public VmByteArrayList(byte[] bytes) {
     super();
-    this.byteBuffer = ByteBuffer.wrap(bytes);
-    this.length = bytes.length;
-  }
-
-  public VmByteArrayList(ByteBuffer byteBuffer, int length) {
-    super();
-    this.byteBuffer = byteBuffer;
-    this.length = length;
-  }
-
-  private ByteBuffer copyByteBuffer() {
-    var ret = ByteBuffer.allocate(byteBuffer.capacity());
-    byteBuffer.rewind();
-    ret.put(byteBuffer);
-    byteBuffer.rewind();
-    ret.flip();
-    return ret;
+    this.bytes = bytes;
   }
 
   private VmGenericList toGenericList() {
     var vector = RrbTree.emptyMutable();
-    for (var elem : byteBuffer.array()) {
-      vector.append(elem);
+    for (var elem : bytes) {
+      vector.append((long) elem);
     }
     return new VmGenericList(vector.immutable());
   }
@@ -46,9 +29,9 @@ public class VmByteArrayList extends VmList {
   @Override
   public VmList replace(long index, Object element) {
     if (element instanceof Long longValue && longValue >= 0 && longValue <= 7) {
-      var newBuffer = copyByteBuffer();
-      newBuffer.put((int) index, longValue.byteValue());
-      return new VmByteArrayList(newBuffer, length);
+      var newBytes = Arrays.copyOf(bytes, bytes.length);
+      newBytes[(int) index] = longValue.byteValue();
+      return new VmByteArrayList(newBytes);
     }
     return toGenericList().replace(index, element);
   }
@@ -63,106 +46,101 @@ public class VmByteArrayList extends VmList {
 
   @Override
   public Object get(long index) {
-    return byteBuffer.get((int) index);
+    return (long) bytes[(int) index];
   }
 
-  @Override
-  public Object getOrNull(long index) {
-    if (index < 0 || index >= getLength()) {
-      return VmNull.withoutDefault();
-    }
-    return get(index);
-  }
-
+  // should be able to avoid allocation here
   @Override
   public VmList subList(long start, long exclusiveEnd) {
-    var newBuffer = byteBuffer.slice((int) start, (int) exclusiveEnd);
-    var length = (int) (exclusiveEnd - start);
-    return new VmByteArrayList(newBuffer, length);
+    var newList = Arrays.copyOfRange(bytes, (int) start, (int) exclusiveEnd);
+    return new VmByteArrayList(newList);
   }
 
   @Override
   public Iterator<Object> iterator() {
-    return new TruffleIterator<>(new ByteBufferIterable(byteBuffer));
+    return new ByteArrayIterator(bytes);
   }
 
   @Override
   public Iterator<Object> reverseIterator() {
-    return new ReverseTruffleIterator<>(new ByteBufferIterable(byteBuffer));
+    return new ReverseByteArrayIterator(bytes);
   }
 
   @Override
   public int getLength() {
-    return length;
+    return bytes.length;
   }
 
   @Override
   public boolean isEmpty() {
-    return length == 0;
+    return bytes.length == 0;
   }
 
   @Override
-  public VmCollection add(Object element) {
+  public VmList add(Object element) {
     if (element instanceof Long longValue && longValue >= 0 && longValue <= 7) {
-      var newBytes = copyByteBuffer();
-      newBytes.position()
+      var newBytes = Arrays.copyOf(bytes, bytes.length + 1);
+      newBytes[bytes.length] = longValue.byteValue();
+      return new VmByteArrayList(newBytes);
     }
+    return toGenericList().add(element);
   }
 
   @Override
   public VmCollection concatenate(VmCollection other) {
     if (other instanceof VmByteArrayList vmByteArrayList) {
-      var newLength = length + vmByteArrayList.length;
-      var bb = ByteBuffer.allocate(newLength);
-      bb.put(byteBuffer).put(vmByteArrayList.byteBuffer);
-      return new VmByteArrayList(bb, newLength);
+      var newLength = bytes.length + vmByteArrayList.bytes.length;
+      var newBytes = new byte[newLength];
+      System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+      System.arraycopy(vmByteArrayList.bytes, 0, newBytes, bytes.length, vmByteArrayList.bytes.length);
+      return new VmByteArrayList(newBytes);
     }
     return toGenericList().concatenate(other);
   }
 
   @Override
-  public Builder<? extends VmCollection> builder() {
-    return null;
-  }
-
-  @Override
   public boolean isLengthOne() {
-    return false;
+    return bytes.length == 1;
   }
 
   @Override
   public VmList getRest() {
-    return null;
-  }
-
-  @Override
-  public Object getRestOrNull() {
-    return null;
+    var newBytes = new byte[bytes.length - 1];
+    System.arraycopy(bytes, 1, newBytes, 0, bytes.length - 1);
+    return new VmByteArrayList(newBytes);
   }
 
   @Override
   public Object getLast() {
-    return null;
-  }
-
-  @Override
-  public Object getLastOrNull() {
-    return null;
+    return (long) bytes[bytes.length - 1];
   }
 
   @Override
   public boolean contains(Object element) {
+    if (!(element instanceof Long longValue)) {
+      return false;
+    }
+    var byteValue = longValue.byteValue();
+    for (var theByte : bytes) {
+      if (theByte == byteValue) {
+        return true;
+      }
+    }
     return false;
   }
 
   @Override
   public long indexOf(Object elem) {
-    return 0;
-  }
-
-  @Override
-  public Object indexOfOrNull(Object elem) {
-    return null;
+    if (!(elem instanceof Long longValue)) {
+      return -1;
+    }
+    var byteValue = longValue.byteValue();
+    for (var i = 0; i < bytes.length; i++) {
+      if (bytes[i] == byteValue) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   @Override
@@ -171,115 +149,159 @@ public class VmByteArrayList extends VmList {
   }
 
   @Override
-  public Object lastIndexOfOrNull(Object elem) {
-    return null;
-  }
-
-  @Override
   public VmPair split(long index) {
-    return null;
-  }
-
-  @Override
-  public Object splitOrNull(long index) {
-    return null;
+    var first = Arrays.copyOf(bytes, (int) index);
+    var secondLength = bytes.length - (int) index;
+    var second = new byte[secondLength];
+    System.arraycopy(bytes, (int) index, second, 0, secondLength);
+    return new VmPair(new VmByteArrayList(first), new VmByteArrayList(second));
   }
 
   @Override
   public VmList take(long n) {
-    return null;
+    checkPositive(n);
+    return new VmByteArrayList(Arrays.copyOfRange(bytes, 0, (int) n));
   }
 
   @Override
   public VmList takeLast(long n) {
-    return null;
+    checkPositive(n);
+    return new VmByteArrayList(Arrays.copyOfRange(bytes, bytes.length - (int) n, bytes.length));
   }
 
   @Override
   public VmList drop(long n) {
-    return null;
+    checkPositive(n);
+    var dropInt = (int) n;
+    return new VmByteArrayList(Arrays.copyOfRange(bytes, dropInt, bytes.length));
   }
 
   @Override
   public VmList dropLast(long n) {
-    return null;
+    checkPositive(n);
+    var dropInt = (int) n;
+    return new VmByteArrayList(Arrays.copyOfRange(bytes, 0, bytes.length - dropInt));
   }
 
   @Override
   public VmList repeat(long n) {
-    return null;
+    checkPositive(n);
+    var intN = (int) n;
+    var newBytes = new byte[bytes.length * intN];
+    for (var i = 0; i < intN; i++) {
+      System.arraycopy(bytes, 0, newBytes, i * bytes.length, bytes.length);
+    }
+    return new VmByteArrayList(newBytes);
   }
 
   @Override
   public VmList reverse() {
-    return null;
+    var newBytes = new byte[bytes.length];
+    for (var i = 0; i < bytes.length; i++) {
+      newBytes[i] = bytes[bytes.length - i - 1];
+    }
+    return new VmByteArrayList(newBytes);
   }
 
   @Override
   public Object[] toArray() {
-    return new Object[0];
+    var ret = new Object[bytes.length];
+    for (var i = 0; i < bytes.length; i++) {
+      ret[i] = (long) bytes[i];
+    }
+    return ret;
   }
 
   @Override
   public VmSet toSet() {
-    return null;
+    if (isEmpty()) {
+      return VmSet.EMPTY;
+    }
+    return VmSet.create(this);
   }
 
   @Override
   public VmListing toListing() {
-    return null;
+    var builder = new VmObjectBuilder(getLength());
+    for (var elem : bytes) builder.addElement((long) elem);
+    return builder.toListing();
   }
 
   @Override
   public VmDynamic toDynamic() {
-    return null;
+    var builder = new VmObjectBuilder(getLength());
+    for (var elem : bytes) builder.addElement((long) elem);
+    return builder.toDynamic();
   }
 
   @Override
   public void force(boolean allowUndefinedValues) {
-
+    // do nothing
   }
 
   @Override
   public Object export() {
-    return null;
+    var result = new ArrayList<>(getLength());
+    for (var elem : bytes) {
+      result.add((long) elem);
+    }
+    return result;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    return false;
+  public boolean equals(Object other) {
+    if (this == other) return true;
+    if (!(other instanceof VmList list)) return false;
+    if (other instanceof VmByteArrayList vmByteArrayList) {
+      return Arrays.equals(bytes, vmByteArrayList.bytes);
+    }
+    return super.equalsList(list);
   }
   
-  private static class ByteBufferIterator implements Iterator<Object> {
+  private static class ByteArrayIterator implements Iterator<Object> {
 
-    private final ByteBuffer byteBuffer;
+    private final byte[] bytes;
+    
+    private int cursor = 0;
 
-    ByteBufferIterator(ByteBuffer byteBuffer) {
-      this.byteBuffer = byteBuffer;
+    ByteArrayIterator(byte[] bytes) {
+      this.bytes = bytes;
     }
 
     @Override
     public boolean hasNext() {
-      return byteBuffer.hasRemaining();
+      return cursor < bytes.length;
     }
 
     @Override
     public Object next() {
-      return (long) byteBuffer.get();
+      var ret = (long) bytes[cursor];
+      cursor++;
+      return ret;
     }
   }
 
-  private static class ByteBufferIterable implements Iterable<Object> {
+  private static class ReverseByteArrayIterator implements Iterator<Object> {
 
-    private final ByteBuffer byteBuffer;
+    private final byte[] bytes;
 
-    ByteBufferIterable(ByteBuffer byteBuffer) {
-      this.byteBuffer = byteBuffer;
+    private int cursor;
+
+    ReverseByteArrayIterator(byte[] bytes) {
+      this.bytes = bytes;
+      this.cursor = bytes.length - 1;
     }
 
     @Override
-    public Iterator<Object> iterator() {
-      return new ByteBufferIterator(byteBuffer);
+    public boolean hasNext() {
+      return cursor >= 0;
+    }
+
+    @Override
+    public Object next() {
+      var ret = (long) bytes[cursor];
+      cursor--;
+      return ret;
     }
   }
 }

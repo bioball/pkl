@@ -7,14 +7,83 @@ import java.util.List;
 import org.organicdesign.fp.collections.RrbTree;
 import org.organicdesign.fp.collections.RrbTree.ImRrbt;
 import org.organicdesign.fp.collections.RrbTree.MutRrbt;
+import org.organicdesign.fp.collections.UnmodCollection;
+import org.organicdesign.fp.collections.UnmodIterable;
+import org.pkl.core.ast.ConstantNode;
+import org.pkl.core.ast.ExpressionNode;
 import org.pkl.core.runtime.Iterators.ReverseTruffleIterator;
 import org.pkl.core.runtime.Iterators.TruffleIterator;
 import org.pkl.core.util.Nullable;
 
 public final class VmGenericList extends VmList {
+  public static final VmList EMPTY = new VmGenericList(RrbTree.empty());
+
   private final ImRrbt<Object> rrbt;
 
   private boolean forced;
+
+  @SuppressWarnings("unchecked")
+  static VmList create(ImRrbt<?> rrbt) {
+    if (rrbt.isEmpty()) return EMPTY;
+    return new VmGenericList((ImRrbt<Object>) rrbt);
+  }
+
+  @TruffleBoundary
+  @SuppressWarnings("unchecked")
+  static VmList create(MutRrbt<?> rrbt) {
+    if (rrbt.isEmpty()) return EMPTY;
+    return new VmGenericList((ImRrbt<Object>) rrbt.immutable());
+  }
+
+  // keeping both `create(Iterable)` and `create(UnmodIterable)` around
+  // allows to easily find call sites that create a VmList
+  // from a non-Paguro collection (which should be rare)
+  @TruffleBoundary
+  public static VmList create(Iterable<?> iterable) {
+    return create(RrbTree.emptyMutable().concat(iterable).immutable());
+  }
+
+  @SuppressWarnings("unchecked")
+  static VmList create(UnmodIterable<?> iterable) {
+    return create((Iterable<Object>) iterable);
+  }
+
+  @TruffleBoundary
+  static VmList create(UnmodCollection<?> collection) {
+    if (collection.isEmpty()) return EMPTY;
+    return new VmGenericList(RrbTree.emptyMutable().concat(collection).immutable());
+  }
+
+  @TruffleBoundary
+  public static VmList create(Object[] elements) {
+    if (elements.length == 0) return EMPTY;
+    var vector = RrbTree.emptyMutable();
+    for (var elem : elements) {
+      vector.append(elem);
+    }
+    return new VmGenericList(vector.immutable());
+  }
+
+  @TruffleBoundary
+  public static VmList create(Object[] elements, int length) {
+    if (elements.length == 0) return EMPTY;
+    var vector = RrbTree.emptyMutable();
+    for (var i = 0; i < length; i++) {
+      vector.append(elements[i]);
+    }
+    return new VmGenericList(vector.immutable());
+  }
+
+  @TruffleBoundary
+  public static VmList createFromConstantNodes(ExpressionNode[] elements) {
+    if (elements.length == 0) return EMPTY;
+    var vector = RrbTree.emptyMutable();
+    for (var elem : elements) {
+      assert elem instanceof ConstantNode;
+      vector.append(((ConstantNode) elem).getValue());
+    }
+    return new VmGenericList(vector.immutable());
+  }
 
   public VmGenericList(ImRrbt<Object> rrbt) {
     this.rrbt = rrbt;
@@ -27,14 +96,19 @@ public final class VmGenericList extends VmList {
   }
 
   @Override
+  public boolean isEmpty() {
+    return rrbt.isEmpty();
+  }
+
+  @Override
   @TruffleBoundary
   public VmList add(Object element) {
-    return VmList.create(rrbt.append(element));
+    return VmGenericList.create(rrbt.append(element));
   }
 
   @TruffleBoundary
   public VmList replace(long index, Object element) {
-    return VmList.create(rrbt.replace((int) index, element));
+    return VmGenericList.create(rrbt.replace((int) index, element));
   }
 
   @TruffleBoundary
@@ -42,13 +116,13 @@ public final class VmGenericList extends VmList {
     if (index < 0 || index >= getLength()) {
       return VmNull.withoutDefault();
     }
-    return VmList.create(rrbt.replace((int) index, element));
+    return VmGenericList.create(rrbt.replace((int) index, element));
   }
 
   @Override
   @TruffleBoundary
   public VmList concatenate(VmCollection other) {
-    return other.isEmpty() ? this : VmList.create(rrbt.concat(other));
+    return other.isEmpty() ? this : VmGenericList.create(rrbt.concat(other));
   }
 
   @TruffleBoundary
@@ -57,29 +131,9 @@ public final class VmGenericList extends VmList {
   }
 
   @TruffleBoundary
-  public Object getOrNull(long index) {
-    if (index < 0 || index >= getLength()) {
-      return VmNull.withoutDefault();
-    }
-    return rrbt.get((int) index);
-  }
-
-  @TruffleBoundary
+  @Override
   public VmList subList(long start, long exclusiveEnd) {
-    return VmList.create(rrbt.subList((int) start, (int) exclusiveEnd));
-  }
-
-  @TruffleBoundary
-  public Object subListOrNull(long start, long exclusiveEnd) {
-    var length = getLength();
-
-    if (start < 0 || start > length) {
-      return VmNull.withoutDefault();
-    }
-    if (exclusiveEnd < start || exclusiveEnd > length) {
-      return VmNull.withoutDefault();
-    }
-    return VmList.create(rrbt.subList((int) start, (int) exclusiveEnd));
+    return VmGenericList.create(rrbt.subList((int) start, (int) exclusiveEnd));
   }
 
   @Override
@@ -95,32 +149,19 @@ public final class VmGenericList extends VmList {
   }
 
   @Override
-  @TruffleBoundary
-  public VmCollection.Builder<VmList> builder() {
-    return new Builder();
+  public boolean isLengthOne() {
+    return rrbt.size() == 1;
   }
 
   @TruffleBoundary
   public VmList getRest() {
     checkNonEmpty();
-    return VmList.create(rrbt.drop(1));
-  }
-
-  @TruffleBoundary
-  public Object getRestOrNull() {
-    if (rrbt.isEmpty()) return VmNull.withoutDefault();
-    return VmList.create(rrbt.drop(1));
+    return VmGenericList.create(rrbt.drop(1));
   }
 
   @TruffleBoundary
   public Object getLast() {
     checkNonEmpty();
-    return rrbt.get(rrbt.size() - 1);
-  }
-
-  @TruffleBoundary
-  public Object getLastOrNull() {
-    if (isEmpty()) return VmNull.withoutDefault();
     return rrbt.get(rrbt.size() - 1);
   }
 
@@ -136,36 +177,14 @@ public final class VmGenericList extends VmList {
   }
 
   @TruffleBoundary
-  public Object indexOfOrNull(Object elem) {
-    long result = rrbt.indexOf(elem);
-    if (result == -1) return VmNull.withoutDefault();
-    return result;
-  }
-
-  @TruffleBoundary
   public long lastIndexOf(Object elem) {
     return rrbt.lastIndexOf(elem);
   }
 
   @TruffleBoundary
-  public Object lastIndexOfOrNull(Object elem) {
-    long result = rrbt.lastIndexOf(elem);
-    if (result == -1) return VmNull.withoutDefault();
-    return result;
-  }
-
-  @TruffleBoundary
   public VmPair split(long index) {
     var tuple = rrbt.split((int) index);
-    return new VmPair(VmList.create(tuple._1()), VmList.create(tuple._2()));
-  }
-
-  @TruffleBoundary
-  public Object splitOrNull(long index) {
-    if (index < 0 || index > getLength()) {
-      return VmNull.withoutDefault();
-    }
-    return split(index);
+    return new VmPair(VmGenericList.create(tuple._1()), VmGenericList.create(tuple._2()));
   }
 
   @TruffleBoundary
@@ -174,7 +193,7 @@ public final class VmGenericList extends VmList {
     if (n >= rrbt.size()) return this;
 
     checkPositive(n);
-    return VmList.create(rrbt.take(n));
+    return VmGenericList.create(rrbt.take(n));
   }
 
   @TruffleBoundary
@@ -183,7 +202,7 @@ public final class VmGenericList extends VmList {
     if (n >= rrbt.size()) return this;
 
     checkPositive(n);
-    return VmList.create(rrbt.drop(rrbt.size() - n));
+    return VmGenericList.create(rrbt.drop(rrbt.size() - n));
   }
 
   @TruffleBoundary
@@ -192,7 +211,7 @@ public final class VmGenericList extends VmList {
     if (n >= rrbt.size()) return EMPTY;
 
     checkPositive(n);
-    return VmList.create(rrbt.drop(n));
+    return VmGenericList.create(rrbt.drop(n));
   }
 
   @TruffleBoundary
@@ -201,7 +220,7 @@ public final class VmGenericList extends VmList {
     if (n >= rrbt.size()) return EMPTY;
 
     checkPositive(n);
-    return VmList.create(rrbt.take(rrbt.size() - n));
+    return VmGenericList.create(rrbt.take(rrbt.size() - n));
   }
 
   @TruffleBoundary
@@ -215,21 +234,17 @@ public final class VmGenericList extends VmList {
     for (var i = 1; i < n; i++) {
       result = result.concat(rrbt);
     }
-    return VmList.create(result);
+    return VmGenericList.create(result);
   }
 
   @TruffleBoundary
   public VmList reverse() {
-    return VmList.create(rrbt.reverse());
+    return VmGenericList.create(rrbt.reverse());
   }
 
   @TruffleBoundary
   public Object[] toArray() {
     return rrbt.toArray();
-  }
-
-  public VmList toList() {
-    return this;
   }
 
   @TruffleBoundary
@@ -283,39 +298,16 @@ public final class VmGenericList extends VmList {
   @TruffleBoundary
   public boolean equals(@Nullable Object other) {
     if (this == other) return true;
-    //noinspection SimplifiableIfStatement
     if (!(other instanceof VmList list)) return false;
     if (other instanceof VmGenericList vmGenericList) {
       return rrbt.equals(vmGenericList.rrbt);
     }
-    return rrbt.equals(list.rrbt);
+    return super.equalsList(list);
   }
 
   @Override
   @TruffleBoundary
   public int hashCode() {
     return rrbt.hashCode();
-  }
-
-
-  private static final class Builder implements VmCollection.Builder<VmList> {
-    private final MutRrbt<Object> list = RrbTree.emptyMutable();
-
-    @Override
-    @TruffleBoundary
-    public void add(Object element) {
-      list.append(element);
-    }
-
-    @Override
-    @TruffleBoundary
-    public void addAll(Iterable<?> elements) {
-      list.concat(elements);
-    }
-
-    @Override
-    public VmList build() {
-      return VmList.create(list);
-    }
   }
 }

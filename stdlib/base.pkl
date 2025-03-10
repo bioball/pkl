@@ -3329,14 +3329,19 @@ external class Map<out Key, out Value> extends Any {
 /// bytes2 = Bytes("AQIDBA==") 
 /// ```
 @Since { version = "0.29.0" }
-external const function Bytes(values: VarArgs<UInt8>): Bytes
+external const function Bytes(values: List<UInt8>|String): Bytes
 
 /// Binary data.
 ///
 /// Two [Bytes] can be concatenated with the `+` operator.
+/// 
+/// For any other manipulations of the byte array, access its [value]. 
 @Since { version = "0.29.0" }
 external class Bytes extends Any {
-  /// The length of these bytes
+  /// The underlying byte array.
+  external value: List<UInt8>
+
+  /// The byte array's length.
   external length: Int
 
   /// The value represented by these bytes, in base64 encoding.
@@ -3364,11 +3369,8 @@ external class Bytes extends Any {
   external sha256Int: Int
 
   /// Converts these bytes into a string using UTF-8 encoding.
-  external function encodeToString(): String = encodeToStringWithCharset("UTF-8")
+  function encodeToString(): String = encodeToStringWithCharset("UTF-8")
 
   /// Converts these bytes into a string, encoded using [charset].
   external function encodeToStringWithCharset(charset: Charset): String
-
-  /// Returns these bytes as a list.
-  external function toList(): List<UInt8>
 }

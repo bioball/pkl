@@ -20,6 +20,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
 import org.pkl.core.ast.ExpressionNode;
+import org.pkl.core.runtime.VmGenericList;
 import org.pkl.core.runtime.VmList;
 
 @NodeInfo(shortName = "List()")
@@ -34,7 +35,7 @@ public final class ListLiteralNode extends ExpressionNode {
   @Override
   @ExplodeLoop
   public VmList executeGeneric(VirtualFrame frame) {
-    var builder = VmList.EMPTY.builder();
+    var builder = VmGenericList.EMPTY.builder();
     for (var element : elements) {
       builder.add(element.executeGeneric(frame));
     }

@@ -23,4 +23,12 @@ examples {
     Bytes("AQIDBA==").toString()
     Bytes("").toString()
   }
+  ["value"] {
+    Bytes("AQIDBA==").value
+    Bytes("").value
+  }
+  ["length"] {
+    Bytes("AQIDBA==").length
+    Bytes("").length
+  }
 }

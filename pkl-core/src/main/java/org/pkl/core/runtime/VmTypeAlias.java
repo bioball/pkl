@@ -244,7 +244,7 @@ public final class VmTypeAlias extends VmValue {
   }
 
   public VmList getTypeParameterMirrors() {
-    var builder = VmList.EMPTY.builder();
+    var builder = VmGenericList.EMPTY.builder();
     for (var typeParameter : typeParameters) {
       builder.add(MirrorFactories.typeParameterFactory.create(typeParameter));
     }

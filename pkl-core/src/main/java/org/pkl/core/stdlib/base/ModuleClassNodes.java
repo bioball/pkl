@@ -48,7 +48,7 @@ public final class ModuleClassNodes {
         var relativizedUri = baseUri.relativize(otherUri);
         if (!relativizedUri.isAbsolute()) {
           var pathElements = relativizedUri.getPath().split("/");
-          return VmList.create(pathElements, pathElements.length - 1);
+          return VmGenericList.create(pathElements, pathElements.length - 1);
         }
       }
 

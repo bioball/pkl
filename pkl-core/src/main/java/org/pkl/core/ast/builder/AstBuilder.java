@@ -242,6 +242,7 @@ import org.pkl.core.runtime.VmDuration;
 import org.pkl.core.runtime.VmException;
 import org.pkl.core.runtime.VmException.ProgramValue;
 import org.pkl.core.runtime.VmExceptionBuilder;
+import org.pkl.core.runtime.VmGenericList;
 import org.pkl.core.runtime.VmLanguage;
 import org.pkl.core.runtime.VmList;
 import org.pkl.core.runtime.VmMap;
@@ -1041,12 +1042,12 @@ public class AstBuilder extends AbstractAstBuilder<Object> {
     var elementNodes = createCollectionArgumentNodes(argList);
 
     if (elementNodes.first.length == 0) {
-      return new ConstantValueNode(VmList.EMPTY);
+      return new ConstantValueNode(VmGenericList.EMPTY);
     }
 
     return elementNodes.second
         ? new ConstantValueNode(
-            createSourceSection(expr), VmList.createFromConstantNodes(elementNodes.first))
+            createSourceSection(expr), VmGenericList.createFromConstantNodes(elementNodes.first))
         : new ListLiteralNode(createSourceSection(expr), elementNodes.first);
   }
 

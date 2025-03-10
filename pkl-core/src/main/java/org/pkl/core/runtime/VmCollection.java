@@ -106,7 +106,7 @@ public abstract class VmCollection extends VmValue implements Iterable<Object> {
   public final VmList replaceRange(long start, long exclusiveEnd, VmCollection replacement) {
     var result =
         Xform.of(this).take(start).concat(replacement).concat(Xform.of(this).drop(exclusiveEnd));
-    return VmList.create(result);
+    return VmGenericList.create(result);
   }
 
   @TruffleBoundary
@@ -123,7 +123,7 @@ public abstract class VmCollection extends VmValue implements Iterable<Object> {
 
     var result =
         Xform.of(this).take(start).concat(replacement).concat(Xform.of(this).drop(exclusiveEnd));
-    return VmList.create(result);
+    return VmGenericList.create(result);
   }
 
   @TruffleBoundary

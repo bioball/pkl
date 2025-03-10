@@ -281,7 +281,7 @@ public final class ListingNodes {
   public abstract static class toList extends ExternalMethod0Node {
     @Specialization
     protected VmList eval(VmListing self) {
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       self.forceAndIterateMemberValues(
           (key, member, value) -> {
             builder.add(value);

@@ -260,12 +260,12 @@ public final class VmSet extends VmCollection {
 
   @TruffleBoundary
   public VmList repeat(long n) {
-    return VmList.create(elementOrder).repeat(n);
+    return VmGenericList.create(elementOrder).repeat(n);
   }
 
   @TruffleBoundary
   public VmList reverse() {
-    return VmList.create(elementOrder).reverse();
+    return VmGenericList.create(elementOrder).reverse();
   }
 
   @TruffleBoundary
@@ -275,7 +275,7 @@ public final class VmSet extends VmCollection {
 
   @TruffleBoundary
   public VmList toList() {
-    return VmList.create(elementOrder);
+    return VmGenericList.create(elementOrder);
   }
 
   public VmSet toSet() {

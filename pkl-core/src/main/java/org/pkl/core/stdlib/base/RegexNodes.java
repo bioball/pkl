@@ -46,7 +46,7 @@ public final class RegexNodes {
     protected VmList eval(VmRegex self, String str) {
       var matcher = self.getPattern().matcher(str);
 
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       while (matcher.find()) {
         // -1 indicates regex match instead of group match (see comment in RegexMatchNodes)
         builder.add(RegexMatchFactory.create(Pair.of(matcher.toMatchResult(), -1)));

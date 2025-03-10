@@ -17,6 +17,7 @@ package org.pkl.core.stdlib.base;
 
 import java.util.regex.MatchResult;
 import org.pkl.core.runtime.BaseModule;
+import org.pkl.core.runtime.VmGenericList;
 import org.pkl.core.runtime.VmList;
 import org.pkl.core.runtime.VmNull;
 import org.pkl.core.runtime.VmTyped;
@@ -61,10 +62,10 @@ final class RegexMatchFactory {
               var groupIndex = resultAndIndex.second;
               if (groupIndex != -1) {
                 // a group match has no groups of its own
-                return VmList.EMPTY;
+                return VmGenericList.EMPTY;
               }
               var result = resultAndIndex.first;
-              var builder = VmList.EMPTY.builder();
+              var builder = VmGenericList.EMPTY.builder();
               for (var i = 0; i <= result.groupCount(); i++) {
                 if (result.start(i) == -1) {
                   // group produced no match

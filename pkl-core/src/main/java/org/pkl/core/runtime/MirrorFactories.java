@@ -115,7 +115,7 @@ public final class MirrorFactories {
             "docComment",
             module -> VmNull.lift(VmUtils.exportDocComment(module.getModuleInfo().getDocComment())))
         .addListProperty(
-            "annotations", module -> VmList.create(module.getModuleInfo().getAnnotations()))
+            "annotations", module -> VmGenericList.create(module.getModuleInfo().getAnnotations()))
         .addSetProperty(
             "modifiers",
             module ->
@@ -138,7 +138,7 @@ public final class MirrorFactories {
             "location", clazz -> sourceLocationFactory.create(clazz.getHeaderSection()))
         .addProperty(
             "docComment", clazz -> VmNull.lift(VmUtils.exportDocComment(clazz.getDocComment())))
-        .addListProperty("annotations", clazz -> VmList.create(clazz.getAnnotations()))
+        .addListProperty("annotations", clazz -> VmGenericList.create(clazz.getAnnotations()))
         .addSetProperty("modifiers", VmClass::getModifierMirrors)
         .addStringProperty("name", VmClass::getSimpleName)
         .addClassProperty("reflectee", Property.identity())
@@ -154,7 +154,7 @@ public final class MirrorFactories {
             "location", alias -> sourceLocationFactory.create(alias.getHeaderSection()))
         .addProperty(
             "docComment", alias -> VmNull.lift(VmUtils.exportDocComment(alias.getDocComment())))
-        .addListProperty("annotations", alias -> VmList.create(alias.getAnnotations()))
+        .addListProperty("annotations", alias -> VmGenericList.create(alias.getAnnotations()))
         .addSetProperty("modifiers", VmTypeAlias::getModifierMirrors)
         .addStringProperty("name", VmTypeAlias::getSimpleName)
         .addProperty("reflectee", Property.identity())
@@ -168,7 +168,7 @@ public final class MirrorFactories {
         .addProperty(
             "docComment",
             property -> VmNull.lift(VmUtils.exportDocComment(property.getDocComment())))
-        .addListProperty("annotations", property -> VmList.create(property.getAnnotations()))
+        .addListProperty("annotations", property -> VmGenericList.create(property.getAnnotations()))
         .addSetProperty("modifiers", ClassProperty::getModifierMirrors)
         .addStringProperty("name", property -> property.getName().toString())
         .addTypedProperty("type", ClassProperty::getTypeMirror)
@@ -188,7 +188,7 @@ public final class MirrorFactories {
             "location", method -> sourceLocationFactory.create(method.getHeaderSection()))
         .addProperty(
             "docComment", method -> VmNull.lift(VmUtils.exportDocComment(method.getDocComment())))
-        .addListProperty("annotations", method -> VmList.create(method.getAnnotations()))
+        .addListProperty("annotations", method -> VmGenericList.create(method.getAnnotations()))
         .addSetProperty("modifiers", ClassMethod::getModifierMirrors)
         .addListProperty("typeParameters", ClassMethod::getTypeParameterMirrors)
         .addStringProperty("name", method -> method.getName().toString())

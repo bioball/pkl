@@ -197,7 +197,7 @@ final class BenchmarkUtils {
     private static VmValue toList(double @Nullable [] values, DurationUnit unit) {
       if (values == null) return VmNull.withoutDefault();
 
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       for (var value : values) builder.add(toDuration(value, unit));
       return builder.build();
     }

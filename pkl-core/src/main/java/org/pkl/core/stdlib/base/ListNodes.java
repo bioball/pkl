@@ -54,7 +54,7 @@ public final class ListNodes {
   public abstract static class lastIndex extends ExternalPropertyNode {
     @Specialization
     protected long eval(VmList self) {
-      return self.getLastIndex();
+      return self.getLength() - 1;
     }
   }
 
@@ -1132,7 +1132,7 @@ public final class ListNodes {
 
     @Specialization
     protected VmList eval(VmList self) {
-      return VmList.create(MergeSort.sort(self.toArray(), compareNode, null));
+      return VmGenericList.create(MergeSort.sort(self.toArray(), compareNode, null));
     }
   }
 
@@ -1141,7 +1141,7 @@ public final class ListNodes {
 
     @Specialization
     protected VmList eval(VmList self, VmFunction selector) {
-      return VmList.create(MergeSort.sort(self.toArray(), compareByNode, selector));
+      return VmGenericList.create(MergeSort.sort(self.toArray(), compareByNode, selector));
     }
   }
 
@@ -1150,7 +1150,7 @@ public final class ListNodes {
 
     @Specialization
     protected VmList eval(VmList self, VmFunction function) {
-      return VmList.create(MergeSort.sort(self.toArray(), compareWithNode, function));
+      return VmGenericList.create(MergeSort.sort(self.toArray(), compareWithNode, function));
     }
   }
 

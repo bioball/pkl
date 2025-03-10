@@ -85,7 +85,7 @@ public final class ReflectNodes {
               ? vmClass.getTypeParameterCount()
               : ((VmTypeAlias) extraStorage).getTypeParameterCount();
 
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       for (var i = 0; i < typeParameterCount; i++) {
         builder.add(MirrorFactories.unknownTypeFactory.create(null));
       }

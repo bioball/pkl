@@ -187,7 +187,7 @@ public final class VmMap extends VmValue implements Iterable<Map.Entry<Object, O
 
   @TruffleBoundary
   public VmList values() {
-    var builder = VmList.EMPTY.builder();
+    var builder = VmGenericList.EMPTY.builder();
     for (var key : keyOrder) {
       var value = map.get(key);
       assert value != null;
@@ -198,7 +198,7 @@ public final class VmMap extends VmValue implements Iterable<Map.Entry<Object, O
 
   @TruffleBoundary
   public VmList entries() {
-    var builder = VmList.EMPTY.builder();
+    var builder = VmGenericList.EMPTY.builder();
     for (var key : keyOrder) {
       var value = map.get(key);
       assert value != null;

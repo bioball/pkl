@@ -145,7 +145,7 @@ public abstract class TypeNode extends PklNode {
   }
 
   public static VmList getMirrors(TypeNode[] nodes) {
-    var builder = VmList.EMPTY.builder();
+    var builder = VmGenericList.EMPTY.builder();
     for (var node : nodes) {
       builder.add(node.getMirror());
     }
@@ -192,7 +192,7 @@ public abstract class TypeNode extends PklNode {
   }
 
   public VmList getTypeArgumentMirrors() {
-    return VmList.EMPTY;
+    return VmGenericList.EMPTY;
   }
 
   protected final VmTypeMismatchException typeMismatch(Object actualValue, Object expectedType) {
@@ -980,7 +980,7 @@ public abstract class TypeNode extends PklNode {
     }
 
     public VmList getElementTypeMirrors() {
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       for (var literal : stringLiterals) {
         builder.add(MirrorFactories.stringLiteralTypeFactory2.create(literal));
       }
@@ -1065,7 +1065,7 @@ public abstract class TypeNode extends PklNode {
     public Object createDefaultValue(
         VmLanguage language, SourceSection headerSection, String qualifiedName) {
 
-      return VmList.EMPTY;
+      return VmGenericList.EMPTY;
     }
 
     @Override
@@ -1154,7 +1154,7 @@ public abstract class TypeNode extends PklNode {
     public Object createDefaultValue(
         VmLanguage language, SourceSection headerSection, String qualifiedName) {
 
-      return VmList.EMPTY;
+      return VmGenericList.EMPTY;
     }
 
     @Override
@@ -2850,10 +2850,10 @@ public abstract class TypeNode extends PklNode {
       return clazz.getPrototype();
     }
 
-    if (clazz.isListClass()) return VmList.EMPTY;
+    if (clazz.isListClass()) return VmGenericList.EMPTY;
     if (clazz.isSetClass()) return VmSet.EMPTY;
     if (clazz.isMapClass()) return VmMap.EMPTY;
-    if (clazz.isCollectionClass()) return VmList.EMPTY;
+    if (clazz.isCollectionClass()) return VmGenericList.EMPTY;
     if (clazz.isNullClass()) return VmNull.withoutDefault();
 
     return null;
@@ -2861,9 +2861,9 @@ public abstract class TypeNode extends PklNode {
 
   private static VmList createUnknownTypeArgumentMirrors(VmClass clazz) {
     var typeParameterCount = clazz.getTypeParameterCount();
-    if (typeParameterCount == 0) return VmList.EMPTY;
+    if (typeParameterCount == 0) return VmGenericList.EMPTY;
 
-    var builder = VmList.EMPTY.builder();
+    var builder = VmGenericList.EMPTY.builder();
     for (var i = 0; i < typeParameterCount; i++) {
       builder.add(MirrorFactories.unknownTypeFactory.create(null));
     }

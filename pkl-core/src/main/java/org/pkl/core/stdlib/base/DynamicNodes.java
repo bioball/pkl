@@ -81,7 +81,7 @@ public final class DynamicNodes {
   public abstract static class toList extends ExternalMethod0Node {
     @Specialization
     protected VmList eval(VmDynamic self) {
-      var builder = VmList.EMPTY.builder();
+      var builder = VmGenericList.EMPTY.builder();
       self.forceAndIterateMemberValues( // could be smarter and only force elements
           (key, member, value) -> {
             if (member.isElement()) {
