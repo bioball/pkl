@@ -77,26 +77,26 @@ class DocSnippetTestsEngine : HierarchicalTestEngine<DocSnippetTestsEngine.Execu
 
   override fun createExecutionContext(request: ExecutionRequest): ExecutionContext {
     val replServer = ReplServer(
-      SecurityManagers.defaultManager,
-      HttpClient.dummyClient(),
-      Loggers.stdErr(),
-      listOf(
-        ModuleKeyFactories.standardLibrary,
-        ModuleKeyFactories.classPath(DocSnippetTests::class.java.classLoader),
-        ModuleKeyFactories.file
-      ),
-      listOf(
-        ResourceReaders.environmentVariable(),
-        ResourceReaders.externalProperty()
-      ),
-      System.getenv(),
-      emptyMap(),
-      null,
-      null,
-      null,
-      IoUtils.getCurrentWorkingDir(),
-      StackFrameTransformers.defaultTransformer,
-      false,
+        SecurityManagers.defaultManager,
+        HttpClient.dummyClient(),
+        Loggers.stdErr(),
+        listOf(
+          ModuleKeyFactories.standardLibrary,
+          ModuleKeyFactories.classPath(DocSnippetTests::class.java.classLoader),
+          ModuleKeyFactories.file
+        ),
+        listOf(
+          ResourceReaders.environmentVariable(),
+          ResourceReaders.externalProperty()
+        ),
+        System.getenv(),
+        emptyMap(),
+        null,
+        null,
+        null,
+        IoUtils.getCurrentWorkingDir(),
+        StackFrameTransformers.defaultTransformer,
+        false,
     )
     return ExecutionContext(replServer)
   }

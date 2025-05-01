@@ -109,10 +109,55 @@ externalModuleReaders: Mapping<String, ExternalReader>?
 @Since { version = "0.27.0" }
 externalResourceReaders: Mapping<String, ExternalReader>?
 
+/// Settings to enable fetching a package through an HTTP mirror.
+///
+/// Placeholders can be used to define substitutions that will be used to resolve the resulting
+/// HTTPS request.
+///
+/// When fetching through a mirror, HTTPS request that start with [match][PackageMirror.match] will
+/// instead be replaced with [rewrite][PackageMirror.rewrite].
+///
+/// Example:
+/// ```
+/// packageMirrors {
+///   new {
+///     match = "pkg.pkl-lang.org"
+///     rewrite = "path.to.my.mirror.com"
+///   }
+/// }
+/// ```
+///
+/// It might be useful to 
+@Since { version = "0.29.0" }
+packageMirrors: Listing<PackageMirror>?
+
+class PackageMirror {
+  match: String(isRegex)
+
+  /// The destination
+  replace: String
+}
+
 /// Settings that control how Pkl talks to HTTP(S) servers.
 class Http {
   /// Configuration of the HTTP proxy to use.
   proxy: Proxy?
+
+  /// Replace outbound requests to one URI with another URI.
+  ///
+  /// Each key describes the prefix of a request, and each value describes the replacement prefix.
+  ///
+  /// This can be useful for setting up mirroring of packages, which are fetched over HTTPS.
+  //
+  /// In the case of multiple matches, the longest prefix is is used.
+  ///
+  /// ```
+  /// rewrites {
+  ///   ["https://pkg.pkl-lang.org"] = "https://my.internal.mirror"
+  /// }
+  /// ```
+  @Since { version = "0.29.0" }
+  rewrites: Mapping<String, String>?
 }
 
 /// Settings that control how Pkl talks to HTTP proxies.

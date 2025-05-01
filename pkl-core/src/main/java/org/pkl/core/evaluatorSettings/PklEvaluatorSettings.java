@@ -18,6 +18,7 @@ package org.pkl.core.evaluatorSettings;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -121,15 +122,17 @@ public record PklEvaluatorSettings(
         externalResourceReaders);
   }
 
-  public record Http(@Nullable Proxy proxy) {
-    public static final Http DEFAULT = new Http(null);
+  public record Http(@Nullable Proxy proxy, Map<String, String> rewrites) {
+    public static final Http DEFAULT = new Http(null, Collections.emptyMap());
 
+    @SuppressWarnings("unchecked")
     public static @Nullable Http parse(@Nullable Value input) {
       if (input == null || input instanceof PNull) {
         return null;
       } else if (input instanceof PObject http) {
         var proxy = Proxy.parse((Value) http.getProperty("proxy"));
-        return proxy == null ? DEFAULT : new Http(proxy);
+        var rewrites = (Map<String, String>) http.getProperty("rewrites");
+        return new Http(proxy, rewrites);
       } else {
         throw PklBugException.unreachableCode();
       }
