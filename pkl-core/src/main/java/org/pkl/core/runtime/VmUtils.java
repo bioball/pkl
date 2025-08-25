@@ -71,7 +71,12 @@ public final class VmUtils {
   public static final URI REPL_TEXT_URI = URI.create(REPL_TEXT);
 
   private static final Engine PKL_ENGINE =
-      Engine.newBuilder("pkl").option("engine.WarnInterpreterOnly", "false").build();
+      Engine.newBuilder("pkl")
+          .option("inspect", "4242")
+          .option("inspect.Suspend", "true")
+          .option("inspect.WaitAttached", "true")
+          .option("engine.WarnInterpreterOnly", "false")
+          .build();
 
   private static final Pattern DOC_COMMENT_LINE_START =
       Pattern.compile(
@@ -262,7 +267,7 @@ public final class VmUtils {
     // const members only need to be executed once on the prototype, and its cached value
     // can be re-used for all children in the amends chain.
     if (member.isConst() && owner != receiver) {
-      assert member.isProp();
+      assert member.isProperty();
       assert owner.isPrototype();
       var result = readMemberOrNull(owner, memberKey, checkType, callNode);
       assert result != null;
@@ -273,7 +278,7 @@ public final class VmUtils {
     if (constantValue != null) {
       var result = constantValue;
       // for a property, Listing element, or Mapping value, do a type check
-      if (member.isProp()) {
+      if (member.isProperty()) {
         var property = receiver.getVmClass().getProperty(member.getName());
         if (property != null && property.getTypeNode() != null) {
           var callTarget = property.getTypeNode().getCallTarget();
@@ -703,6 +708,7 @@ public final class VmUtils {
       return property;
     }
 
+    bodyNode = new MemberBodyWrapperNode(bodyNode);
     property.initMemberNode(
         typeNode != null
             ? new TypedPropertyNode(language, descriptor, property, bodyNode, typeNode)
@@ -736,6 +742,8 @@ public final class VmUtils {
       property.initConstantValue(constantNode);
       return property;
     }
+
+    bodyNode = new MemberBodyWrapperNode(bodyNode);
 
     property.initMemberNode(
         typeNode != null

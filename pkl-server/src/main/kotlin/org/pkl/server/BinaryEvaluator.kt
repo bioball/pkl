@@ -178,7 +178,7 @@ internal class BinaryEvaluator(
 
       packer.packArrayHeader(3)
       when {
-        member.isProp -> {
+        member.isProperty -> {
           packer.packInt(CODE_PROPERTY.toInt())
           packer.packString(key.toString())
         }

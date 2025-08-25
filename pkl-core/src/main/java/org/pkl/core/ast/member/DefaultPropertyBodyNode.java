@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.pkl.core.ast.member;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.source.SourceSection;
 import org.pkl.core.ast.ExpressionNode;
 import org.pkl.core.runtime.Identifier;
@@ -36,6 +38,11 @@ public final class DefaultPropertyBodyNode extends ExpressionNode {
     super(sourceSection);
     this.propertyName = propertyName;
     this.typeNode = typeNode;
+  }
+
+  @Override
+  public boolean hasTag(Class<? extends Tag> tag) {
+    return tag == StandardTags.CallTag.class || super.hasTag(tag);
   }
 
   public boolean isUndefined() {

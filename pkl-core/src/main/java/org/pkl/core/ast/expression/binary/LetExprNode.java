@@ -18,6 +18,8 @@ package org.pkl.core.ast.expression.binary;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.source.SourceSection;
 import org.pkl.core.ast.ExpressionNode;
@@ -46,6 +48,11 @@ public final class LetExprNode extends ExpressionNode {
     this.unresolvedFunctionNode = functionNode;
     this.valueNode = valueNode;
     this.isCustomThisScope = isCustomThisScope;
+  }
+
+  @Override
+  public boolean hasTag(Class<? extends Tag> tag) {
+    return tag == StandardTags.CallTag.class || super.hasTag(tag);
   }
 
   @Override

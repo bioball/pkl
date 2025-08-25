@@ -93,7 +93,7 @@ public abstract class GeneratorPredicateMemberNode extends GeneratorMemberNode {
         if (!EconomicSets.add(visitedKeys, key)) continue;
 
         var member = entries.getValue();
-        if (member.isProp() || member.isLocal()) continue;
+        if (member.isProperty() || member.isLocal()) continue;
 
         var value = owner.getCachedValue(key);
         if (value == null) {

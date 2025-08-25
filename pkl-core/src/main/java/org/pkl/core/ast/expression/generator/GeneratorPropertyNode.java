@@ -31,7 +31,7 @@ public abstract class GeneratorPropertyNode extends GeneratorMemberNode {
   protected GeneratorPropertyNode(ObjectMember member) {
     super(member.getSourceSection(), false);
     this.member = member;
-    assert member.isProp();
+    assert member.isProperty();
   }
 
   @Specialization

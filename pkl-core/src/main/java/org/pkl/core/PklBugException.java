@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package org.pkl.core;
+
+import java.io.PrintWriter;
+import org.pkl.core.util.StringBuilderWriter;
 
 public final class PklBugException extends PklException {
   public static PklBugException unreachableCode() {
@@ -30,5 +33,12 @@ public final class PklBugException extends PklException {
 
   public PklBugException(String message) {
     super(message);
+  }
+
+  @Override
+  public String getMessage() {
+    var sb = new StringBuilder();
+    this.getCause().printStackTrace(new PrintWriter(new StringBuilderWriter(sb)));
+    return super.getMessage() + ": " + sb;
   }
 }

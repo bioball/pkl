@@ -252,7 +252,7 @@ public abstract class AbstractRenderer implements VmValueVisitor {
     value.forceAndIterateMemberValues(
         (memberKey, member, memberValue) -> {
           if (member.isClass() || member.isTypeAlias()) return true;
-          assert member.isProp();
+          assert member.isProperty();
           doVisitProperty((Identifier) memberKey, memberValue, member.getSourceSection(), isFirst);
           return true;
         });
@@ -273,7 +273,7 @@ public abstract class AbstractRenderer implements VmValueVisitor {
     value.forceAndIterateMemberValues(
         (memberKey, member, memberValue) -> {
           var sourceSection = member.getSourceSection();
-          if (member.isProp()) {
+          if (member.isProperty()) {
             if (!canRenderPropertyOrEntry) cannotRenderObjectWithElementsAndOtherMembers(value);
             doVisitProperty((Identifier) memberKey, memberValue, sourceSection, isFirst);
           } else if (member.isEntry()) {

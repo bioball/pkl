@@ -23,6 +23,8 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
@@ -178,5 +180,10 @@ public abstract class InvokeMethodVirtualNode extends ExpressionNode {
       CompilerDirectives.transferToInterpreter();
       throw exceptionBuilder().evalError("methodMustBeConst", methodName.toString()).build();
     }
+  }
+
+  @Override
+  public boolean hasTag(Class<? extends Tag> tag) {
+    return tag == StandardTags.CallTag.class || super.hasTag(tag);
   }
 }

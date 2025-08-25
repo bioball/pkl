@@ -316,7 +316,7 @@ public final class VmValueRenderer {
 
             append(currIndent);
 
-            if (member.isProp()) {
+            if (member.isProperty()) {
               contexts.push(Context.IMPLICIT);
               writeIdentifier(key.toString());
               if (value instanceof VmObjectLike) {

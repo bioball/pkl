@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,14 +59,8 @@ public final class ObjectMember extends Member {
     memberNode = node;
   }
 
-  /**
-   * Tells if this member is a property.
-   *
-   * <p>Not named `isProperty()` to work around <a
-   * href="https://bugs.openjdk.java.net/browse/JDK-8185424">JDK-8185424</a> (which is apparently
-   * triggered by `-Xdoclint:none`).
-   */
-  public boolean isProp() {
+  /** Tells if this member is a property. */
+  public boolean isProperty() {
     return name != null;
   }
 
@@ -107,7 +101,7 @@ public final class ObjectMember extends Member {
   }
 
   public @Nullable Object getLocalPropertyDefaultValue() {
-    assert isProp() && isLocal();
+    assert isProperty() && isLocal();
     return getMemberNode() instanceof LocalTypedPropertyNode propertyNode
         ? propertyNode.getDefaultValue()
         : VmDynamic.empty();

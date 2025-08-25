@@ -19,6 +19,8 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.ContextThreadLocal;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.ContextPolicy;
+import com.oracle.truffle.api.instrumentation.ProvidedTags;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import org.pkl.core.ast.builder.AstBuilder;
@@ -30,6 +32,11 @@ import org.pkl.parser.Parser;
 import org.pkl.parser.ParserError;
 import org.pkl.parser.syntax.Module;
 
+@ProvidedTags({
+  StandardTags.ExpressionTag.class,
+  StandardTags.RootTag.class,
+  StandardTags.StatementTag.class
+})
 @TruffleLanguage.Registration(
     id = "pkl",
     name = "Pkl",

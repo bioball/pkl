@@ -37,7 +37,7 @@ public final class TypedPropertyNode extends RegularMemberNode {
 
     super(language, descriptor, member, bodyNode);
 
-    assert member.isProp();
+    assert member.isProperty();
 
     typeCheckCallNode = DirectCallNode.create(typeNode.getCallTarget());
   }

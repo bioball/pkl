@@ -1683,7 +1683,7 @@ public abstract class TypeNode extends PklNode {
         while (cursor.advance()) {
           loopCount += 1;
           var member = cursor.getValue();
-          if (member.isProp()) continue;
+          if (member.isProperty()) continue;
 
           var memberKey = cursor.getKey();
 

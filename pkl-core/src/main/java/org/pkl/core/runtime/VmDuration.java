@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 package org.pkl.core.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import java.util.*;
 import org.pkl.core.*;
 import org.pkl.core.util.DurationUtils;
 import org.pkl.core.util.Nullable;
 
 @ValueType
+@ExportLibrary(InteropLibrary.class)
 public final class VmDuration extends VmValue implements Comparable<VmDuration> {
   private static final Map<Identifier, DurationUnit> UNITS =
       Map.of(
@@ -114,7 +118,7 @@ public final class VmDuration extends VmValue implements Comparable<VmDuration> 
   }
 
   @Override
-  public Value export() {
+  public Duration export() {
     return new Duration(value, unit);
   }
 
@@ -154,5 +158,15 @@ public final class VmDuration extends VmValue implements Comparable<VmDuration> 
   @Override
   public String toString() {
     return DurationUtils.toPklString(value, unit);
+  }
+
+  @ExportMessage
+  boolean isDuration() {
+    return true;
+  }
+
+  @ExportMessage
+  java.time.Duration asDuration() {
+    return export().toJavaDuration();
   }
 }

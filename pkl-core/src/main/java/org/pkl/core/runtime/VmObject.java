@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,13 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import java.util.*;
 import java.util.function.BiFunction;
 import org.graalvm.collections.EconomicMap;
+import org.graalvm.collections.EconomicSet;
 import org.graalvm.collections.UnmodifiableEconomicMap;
+import org.graalvm.collections.UnmodifiableEconomicSet;
 import org.pkl.core.ast.member.ObjectMember;
 import org.pkl.core.util.CollectionUtils;
 import org.pkl.core.util.EconomicMaps;
+import org.pkl.core.util.LateInit;
 import org.pkl.core.util.Nullable;
 
 /** Corresponds to `pkl.base#Object`. */
@@ -32,6 +35,8 @@ public abstract class VmObject extends VmObjectLike {
   @CompilationFinal protected @Nullable VmObject parent;
   protected final UnmodifiableEconomicMap<Object, ObjectMember> members;
   protected final EconomicMap<Object, Object> cachedValues;
+
+  @LateInit protected EconomicSet<Identifier> __localPropertyNames;
 
   protected int cachedHash;
   private boolean forced;
@@ -94,6 +99,22 @@ public abstract class VmObject extends VmObjectLike {
   @Override
   public final boolean hasCachedValue(Object key) {
     return EconomicMaps.containsKey(cachedValues, key);
+  }
+
+  @TruffleBoundary
+  protected UnmodifiableEconomicSet<Identifier> getLocalPropertyNames() {
+    if (__localPropertyNames == null) {
+      EconomicSet<Identifier> ret = EconomicSet.create();
+      var cursor = members.getEntries();
+      while (cursor.advance()) {
+        var member = cursor.getValue();
+        if (member.isLocal()) {
+          ret.add((Identifier) cursor.getKey());
+        }
+      }
+      __localPropertyNames = ret;
+    }
+    return __localPropertyNames;
   }
 
   @Override

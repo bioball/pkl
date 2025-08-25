@@ -203,7 +203,7 @@ public abstract class GeneratorSpreadNode extends GeneratorMemberNode {
   private void doEvalMapping(VirtualFrame frame, ObjectData data, VmObject iterable) {
     iterable.forceAndIterateMemberValues(
         (key, member, value) -> {
-          if (member.isElement() || member.isProp()) {
+          if (member.isElement() || member.isProperty()) {
             cannotHaveMember(BaseModule.getMappingClass(), member);
           }
           data.addMember(frame, key, createMember(member, value), this);
@@ -214,7 +214,7 @@ public abstract class GeneratorSpreadNode extends GeneratorMemberNode {
   private void doEvalListing(VirtualFrame frame, ObjectData data, VmObject iterable) {
     iterable.forceAndIterateMemberValues(
         (key, member, value) -> {
-          if (member.isEntry() || member.isProp()) {
+          if (member.isEntry() || member.isProperty()) {
             cannotHaveMember(getListingClass(), member);
           }
           data.addElement(frame, createMember(member, value), this);
@@ -317,7 +317,9 @@ public abstract class GeneratorSpreadNode extends GeneratorMemberNode {
     var exception =
         exceptionBuilder()
             .evalError(
-                member.isProp() ? "objectSpreadDuplicateProperty" : "objectSpreadDuplicateEntry",
+                member.isProperty()
+                    ? "objectSpreadDuplicateProperty"
+                    : "objectSpreadDuplicateEntry",
                 key instanceof Identifier ? key : new ProgramValue("", key))
             .build();
     if (member.getHeaderSection().isAvailable()) {

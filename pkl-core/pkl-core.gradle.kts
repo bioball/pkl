@@ -48,6 +48,7 @@ dependencies {
   implementation(libs.msgpack)
   implementation(libs.truffleApi)
   implementation(libs.graalSdk)
+  implementation(libs.chromeinspector)
 
   implementation(libs.paguro) { exclude(group = "org.jetbrains", module = "annotations") }
 

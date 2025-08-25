@@ -1,5 +1,5 @@
 /*
- * Copyright © 2024 Apple Inc. and the Pkl project authors. All rights reserved.
+ * Copyright © 2024-2025 Apple Inc. and the Pkl project authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package org.pkl.core.runtime;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import org.graalvm.collections.EconomicMap;
 import org.graalvm.collections.UnmodifiableEconomicMap;
 import org.pkl.core.Composite;
@@ -29,6 +32,7 @@ import org.pkl.core.util.EconomicMaps;
 import org.pkl.core.util.LateInit;
 import org.pkl.core.util.Nullable;
 
+@ExportLibrary(InteropLibrary.class)
 public final class VmTyped extends VmObject {
   @CompilationFinal @LateInit private VmClass clazz;
 
@@ -53,6 +57,10 @@ public final class VmTyped extends VmObject {
 
   public void addProperties(UnmodifiableEconomicMap<Object, ObjectMember> properties) {
     EconomicMaps.putAll((EconomicMap<Object, ObjectMember>) members, properties);
+  }
+
+  public boolean isInitialized() {
+    return clazz != null;
   }
 
   public VmClass getVmClass() {
@@ -210,5 +218,78 @@ public final class VmTyped extends VmObject {
 
     cachedHash = result;
     return result;
+  }
+
+  @ExportMessage
+  boolean hasMembers() {
+    return true;
+  }
+
+  @ExportMessage
+  String[] getMembers(boolean ignored) {
+    var localPropertyNames = getLocalPropertyNames();
+    var propertyNames = getVmClass().getAllRegularPropertyNames();
+    var ret = new String[propertyNames.size() + localPropertyNames.size()];
+    var i = 0;
+    for (var propertyName : localPropertyNames) {
+      ret[i] = propertyName.toString();
+      i++;
+    }
+    for (var propertyName : propertyNames) {
+      ret[i] = propertyName.toString();
+      i++;
+    }
+    return ret;
+  }
+
+  @ExportMessage
+  boolean isMemberReadable(String ignored) {
+    return true;
+  }
+
+  @ExportMessage
+  boolean isMemberModifiable(String ignored) {
+    return false;
+  }
+
+  @ExportMessage
+  boolean isMemberInvocable(String ignored) {
+    return true;
+  }
+
+  @ExportMessage
+  @Nullable
+  Object readMember(String memberName) {
+    var propertyName = Identifier.get(memberName);
+    return VmUtils.readMemberOrNull(this, propertyName, true);
+  }
+
+  @ExportMessage
+  boolean hasMemberReadSideEffects(String memberName) {
+    var propertyName = Identifier.get(memberName);
+    return !cachedValues.containsKey(propertyName);
+  }
+
+  @ExportMessage
+  Object invokeMember(String identifier, Object... arguments) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ExportMessage
+  void writeMember(String ignored, Object ignored1) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ExportMessage
+  boolean isMemberInsertable(String ignored) {
+    return false;
+  }
+
+  @ExportMessage
+  public String toDisplayString(boolean allowSideEffects) {
+    if (allowSideEffects) {
+      force(true);
+    }
+    return VmValueRenderer.multiLine(10000).render(this);
   }
 }

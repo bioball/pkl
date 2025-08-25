@@ -18,6 +18,8 @@ package org.pkl.core.ast.expression.member;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.source.SourceSection;
@@ -71,5 +73,10 @@ public final class InvokeMethodLexicalNode extends ExpressionNode {
       assert owner != null;
     }
     return owner.getEnclosingFrame();
+  }
+
+  @Override
+  public boolean hasTag(Class<? extends Tag> tag) {
+    return tag == StandardTags.CallTag.class || super.hasTag(tag);
   }
 }

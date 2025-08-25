@@ -39,7 +39,7 @@ public abstract class TypeCheckedPropertyNode extends RegularMemberNode {
 
     super(language, descriptor, member, bodyNode);
 
-    assert member.isProp();
+    assert member.isProperty();
   }
 
   @SuppressWarnings("unused")
