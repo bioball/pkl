@@ -18,14 +18,17 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.ClasspathNormalizer
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
@@ -56,6 +59,10 @@ abstract class NativeImageBuild : DefaultTask() {
   @get:Input abstract val sharedLibrary: Property<Boolean>
 
   @get:InputFiles abstract val classpath: ConfigurableFileCollection
+
+  @get:Input abstract val envVars: MapProperty<String, String>
+
+  @get:InputFile @get:Optional abstract val nativeCompilerPath: RegularFileProperty
 
   @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
@@ -111,6 +118,7 @@ abstract class NativeImageBuild : DefaultTask() {
       .files(nativeImageExecutable)
       .withPropertyName("graalVmNativeImage")
       .withPathSensitivity(PathSensitivity.ABSOLUTE)
+    inputs.file(nativeCompilerPath)
   }
 
   @Suppress("unused")
@@ -125,9 +133,9 @@ abstract class NativeImageBuild : DefaultTask() {
           // if building a library, native-image outputs five files (four headers, and dynamic lib)
           // otherwise, it outputs just the one file
           if (isLibrary) {
-            val sharedLibrarySuffix = buildInfo.os.sharedLibrarySuffix
+            val sharedLibraryExtension = buildInfo.os.sharedLibraryExtension
             dir.files(
-              "$libraryName.$sharedLibrarySuffix",
+              "$libraryName.$sharedLibraryExtension",
               "$libraryName.h",
               "${libraryName}_dynamic.h",
               "graal_isolate.h",
@@ -202,6 +210,10 @@ abstract class NativeImageBuild : DefaultTask() {
           Runtime.getRuntime().availableProcessors() /
             if (buildInfo.os.isMacOS && !buildInfo.isCiBuild) 4 else 1
         add("-J-XX:ActiveProcessorCount=${processors}")
+        addAll(envVars.get().entries.map { "-E${it.key}=${it.value}" })
+        if (nativeCompilerPath.isPresent) {
+          add("--native-compiler-path=${nativeCompilerPath.get().asFile}")
+        }
         // Pass through all `HOMEBREW_` prefixed environment variables to allow build with shimmed
         // tools.
         addAll(environment.keys.filter { it.startsWith("HOMEBREW_") }.map { "-E$it" })

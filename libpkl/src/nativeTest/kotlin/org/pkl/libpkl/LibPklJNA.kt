@@ -36,5 +36,5 @@ interface LibPklJNA : Library {
 
   fun pkl_close(pexec: Pointer): Int
 
-  fun pkl_version(pexec: Pointer): String
+  fun pkl_version(): String
 }

@@ -64,7 +64,7 @@ private fun NativeImageBuild.configure(target: Target) {
     dependsOn(":installGraalVmAmd64")
   }
 
-  outputDir = target.outputDir
+  outputDir = target.tempOutputDir
   outputName = "libpkl_internal"
 
   classpath.from(sourceSets.main.map { it.output })
@@ -73,7 +73,21 @@ private fun NativeImageBuild.configure(target: Target) {
   )
   classpath.from(configurations.runtimeClasspath)
 
+  // these files are written by our custom build script
+  outputs.files(
+    target.outputDir.map { it.file("libpkl.${target.os.sharedLibraryExtension}") },
+    target.outputDir.map { it.file("libpkl.${target.os.staticLibraryExtension}") },
+    target.outputDir.map { it.file("pkl.h") },
+  )
+
   sharedLibrary = true
+  val extension = if (buildInfo.os.isWindows) "bat" else "sh"
+  nativeCompilerPath = projectDir.resolve("scripts/build_${target.os.simpleName}.$extension")
+
+  envVars.put("PKL_VERSION", buildInfo.pklVersion)
+  envVars.put("PKL_TEMP_OUTPUT_PATH", target.tempOutputDir.map { it.asFile.toString() })
+  envVars.put("PKL_OUTPUT_PATH", target.outputDir.map { it.asFile.toString() })
+  envVars.put("PKL_TARGET_ARCH", target.arch.cCompilerName)
 }
 
 val macNativeImageAmd64 by
@@ -96,127 +110,27 @@ val linuxNativeImageAarch64 by
       )
   }
 
-val alpineNativeImageAmd64 by
-  tasks.registering(NativeImageBuild::class) {
-    configure(Target.AlpineLinuxAmd64)
-    extraNativeImageArgs =
-      listOf(
-        // TODO(kushal): https://github.com/oracle/graal/issues/3053
-        "--libc=musl"
-      )
-  }
-
 val windowsNativeImageAmd64 by
   tasks.registering(NativeImageBuild::class) {
     configure(Target.WindowsAmd64)
-    extraNativeImageArgs = listOf("-Dfile.encoding=UTF-8")
+    extraNativeImageArgs = listOf("-Dfile.encoding=UTF-8", "-H:-CheckToolchain")
   }
 
 val Target.outputDir
   get() = layout.buildDirectory.dir("native-libs/$targetName")
 
-fun Exec.configureCompile(target: Target) {
-  val projectDir = project.layout.projectDirectory.asFile.path
+val Target.tempOutputDir
+  get() = layout.buildDirectory.dir("tmp/native-libs/$targetName")
 
-  workingDir = target.outputDir.get().asFile
+tasks.assembleNativeMacOsAarch64 { dependsOn(macNativeImageAarch64) }
 
-  enabled = buildInfo.targetMachine == target
+tasks.assembleNativeMacOsAmd64 { dependsOn(macNativeImageAmd64) }
 
-  val outputFile = "libpkl.${buildInfo.os.sharedLibrarySuffix}"
+tasks.assembleNativeLinuxAarch64 { dependsOn(linuxNativeImageAarch64) }
 
-  executable =
-    when {
-      target.musl -> "musl-gcc"
-      else -> "gcc"
-    }
+tasks.assembleNativeLinuxAmd64 { dependsOn(linuxNativeImageAmd64) }
 
-  argumentProviders.add(
-    CommandLineArgumentProvider {
-      buildList {
-        add("-shared")
-        add("-o")
-        add(outputFile)
-        if (buildInfo.isReleaseBuild) {
-          add("-O2")
-        }
-        add("-g")
-        add("-Wall")
-        add("$projectDir/src/main/c/pkl.c")
-        add("-I$projectDir/src/main/c")
-        add("-I${target.outputDir.get()}")
-        add("-L${target.outputDir.get()}")
-        add("-fPIC")
-        add("-lpkl_internal")
-        if (target.os.isMacOS) {
-          val archStr =
-            when (target.arch) {
-              Target.Arch.AMD64 -> "x86_64"
-              Target.Arch.AARCH64 -> "arm64"
-            }
-          add("-target")
-          add("$archStr-apple-darwin")
-        }
-      }
-    }
-  )
-
-  outputs.files(target.outputDir.map { it.files(outputFile, "pkl.h") })
-
-  doLast {
-    copy {
-      from(file("src/main/c/pkl.h"))
-      into(target.outputDir)
-    }
-  }
-}
-
-val macCCompileAarch64 by
-  tasks.registering(Exec::class) {
-    dependsOn(macNativeImageAarch64)
-    configureCompile(Target.MacosAarch64)
-  }
-
-val macCCompileAmd64 by
-  tasks.registering(Exec::class) {
-    dependsOn(macNativeImageAmd64)
-    configureCompile(Target.MacosAmd64)
-  }
-
-val linuxCCompileAmd64 by
-  tasks.registering(Exec::class) {
-    dependsOn(linuxNativeImageAmd64)
-    configureCompile(Target.LinuxAmd64)
-  }
-
-val linuxCCompileAarch64 by
-  tasks.registering(Exec::class) {
-    dependsOn(linuxNativeImageAarch64)
-    configureCompile(Target.LinuxAarch64)
-  }
-
-val alpineLinuxCCompileAmd64 by
-  tasks.registering(Exec::class) {
-    dependsOn(alpineNativeImageAmd64)
-    configureCompile(Target.AlpineLinuxAmd64)
-  }
-
-val windowsCCompileAmd64 by
-  tasks.registering(Exec::class) {
-    dependsOn(windowsNativeImageAmd64)
-    configureCompile(Target.WindowsAmd64)
-  }
-
-tasks.assembleNativeMacOsAarch64 { dependsOn(macCCompileAarch64) }
-
-tasks.assembleNativeMacOsAmd64 { dependsOn(macCCompileAmd64) }
-
-tasks.assembleNativeLinuxAmd64 { dependsOn(linuxCCompileAmd64) }
-
-tasks.assembleNativeLinuxAarch64 { dependsOn(linuxCCompileAarch64) }
-
-tasks.assembleNativeAlpineLinuxAmd64 { dependsOn(alpineLinuxCCompileAmd64) }
-
-tasks.assembleNativeWindowsAmd64 { dependsOn(windowsCCompileAmd64) }
+tasks.assembleNativeWindowsAmd64 { dependsOn(windowsNativeImageAmd64) }
 
 val nativeTest by
   tasks.registering(Test::class) {
@@ -246,13 +160,28 @@ val nativeTest by
 
 tasks.testNative { dependsOn(nativeTest) }
 
-private val licenseHeaderFile by lazy {
-  rootProject.file("buildSrc/src/main/resources/license-header.star-block.txt")
-}
-
 spotless {
   cpp {
-    licenseHeaderFile(licenseHeaderFile, "// ")
+    licenseHeaderFile(
+      rootProject.file("buildSrc/src/main/resources/license-header.star-block.txt"),
+      "// ",
+    )
     target("src/main/c/*.c", "src/main/c/*.h")
+  }
+  shell {
+    licenseHeaderFile(
+        rootProject.file("buildSrc/src/main/resources/license-header.hash-comment.txt"),
+        "## build_",
+      )
+      .skipLinesMatching("^#!.+?$")
+
+    target("scripts/*.sh")
+  }
+  format("bat") {
+    target("scripts/*.bat")
+    licenseHeaderFile(
+      rootProject.file("buildSrc/src/main/resources/license-header.batch-script.txt"),
+      "@echo",
+    )
   }
 }

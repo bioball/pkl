@@ -17,14 +17,41 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <pthread.h>
+#endif
 
 #include <graal_isolate.h>
 #include <libpkl_internal.h>
 
 #include <pkl.h>
 
-void pkl_runtime_cleanup(pkl_exec_t *pexec) {
+#ifndef PKL_VERSION
+#define PKL_VERSION "0.0.0"
+#endif
+
+struct __pkl_exec_t {
+#ifdef _WIN32
+  CRITICAL_SECTION mutex;
+#else
+  pthread_mutex_t mutex;
+#endif
+  graal_isolatethread_t *graal_isolatethread;
+};
+
+static _Thread_local int pkl_last_error_code = 0;
+
+static _Thread_local const char *pkl_last_error_message = NULL;
+
+static void pkl_set_error(int code, const char *message) {
+  pkl_last_error_code = code;
+  pkl_last_error_message = message;
+}
+
+static void pkl_runtime_cleanup(pkl_exec_t *pexec) {
   pkl_internal_server_stop(pexec->graal_isolatethread);
   pkl_internal_close(pexec->graal_isolatethread);
   pexec->graal_isolatethread = NULL;
@@ -34,108 +61,138 @@ pkl_exec_t *pkl_init(PklMessageResponseHandler handler, void *userData) {
   pkl_exec_t *pexec = calloc(1, sizeof(pkl_exec_t));
 
   if (pexec == NULL) {
-    perror("pkl_init: couldn't allocate pkl_exec_t");
+    pkl_set_error(PKL_ERR_NOALLOC, "Failed to allocate pkl_exec_t");
     return NULL;
   }
 
-  if (pthread_mutex_init(&pexec->graal_mutex, NULL) != 0) {
-    perror("pkl_init: couldn't initialise pthread_mutex");
-    pkl_runtime_cleanup(pexec);
+#ifdef _WIN32
+  InitializeCriticalSection(&pexec->mutex);
+  EnterCriticalSection(&pexec->mutex);
+#else
+  if (pthread_mutex_init(&pexec->mutex, NULL) != 0) {
+    pkl_set_error(PKL_ERR_LOCK, "pkl_init: failed initialize mutex");
     free(pexec);
     return NULL;
   }
 
-  if (pthread_mutex_lock(&pexec->graal_mutex) != 0) {
-    perror("pkl_init: couldn't lock mutex");
-    pkl_runtime_cleanup(pexec);
-    pthread_mutex_destroy(&pexec->graal_mutex);
+  if (pthread_mutex_lock(&pexec->mutex) != 0) {
+    pkl_set_error(PKL_ERR_LOCK, "pkl_init: failed to lock mutex");
+    pthread_mutex_destroy(&pexec->mutex);
     free(pexec);
     return NULL;
   }
+#endif
 
   pexec->graal_isolatethread = pkl_internal_init();
+
+  if (pexec->graal_isolatethread == NULL) {
+    pkl_set_error(PKL_ERR_NOALLOC, "pkl_init: failed to allocate graal_isolatethread");
+#ifdef _WIN32
+    LeaveCriticalSection(&pexec->mutex);
+    DeleteCriticalSection(&pexec->mutex);
+#else
+    pthread_mutex_unlock(&pexec->mutex);
+    pthread_mutex_destroy(&pexec->mutex);
+#endif
+    free(pexec);
+    return NULL;
+  }
+
   pkl_internal_register_response_handler(pexec->graal_isolatethread, handler, userData);
   pkl_internal_server_start(pexec->graal_isolatethread);
 
-  if (pthread_mutex_unlock(&pexec->graal_mutex) != 0) {
-    perror("pkl_init: couldn't unlock mutex");
-    return NULL;
+#ifdef _WIN32
+  LeaveCriticalSection(&pexec->mutex);
+#else
+  if (pthread_mutex_unlock(&pexec->mutex) != 0) {
+    fprintf(stderr, "pkl_init: fatal: failed to unlock mutex.\n");
+    abort();
   }
+#endif
 
   return pexec;
 };
 
 int pkl_send_message(pkl_exec_t *pexec, int length, char *message) {
-  if (pexec == NULL) {
-    perror("pkl_send_message: pexec is NULL");
+  if (pexec == NULL || message == NULL) {
     return -1;
   }
 
-  if (message == NULL) {
-    perror("pkl_send_message: message is NULL");
-    return -1;
+#ifdef _WIN32
+  EnterCriticalSection(&pexec->mutex);
+#else
+  if (pthread_mutex_lock(&pexec->mutex) != 0) {
+    pkl_set_error(PKL_ERR_LOCK, "pkl_send_message: failed to lock mutex");
+    return PKL_ERR_LOCK;
   }
-
-  if (pthread_mutex_lock(&pexec->graal_mutex) != 0) {
-    perror("pkl_send_message: couldn't lock mutex");
-    return -1;
-  }
+#endif
 
   pkl_internal_send_message(pexec->graal_isolatethread, length, message);
 
-  if (pthread_mutex_unlock(&pexec->graal_mutex) != 0) {
-    perror("pkl_send_message: couldn't unlock mutex");
-    return -1;
+#ifdef _WIN32
+  LeaveCriticalSection(&pexec->mutex);
+#else
+  if (pthread_mutex_unlock(&pexec->mutex) != 0) {
+    fprintf(stderr, "pkl_send_message: fatal: failed to unlock mutex.\n");
+    abort();
   }
+#endif
 
   return 0;
 };
 
 int pkl_close(pkl_exec_t *pexec) {
   if (pexec == NULL) {
-    perror("pkl_close: pexec is NULL");
     return -1;
   }
 
-  if (pthread_mutex_lock(&pexec->graal_mutex) != 0) {
-    perror("pkl_close: couldn't lock mutex");
-    return -1;
+#ifdef _WIN32
+  EnterCriticalSection(&pexec->mutex);
+#else
+  if (pthread_mutex_lock(&pexec->mutex) != 0) {
+    pkl_set_error(PKL_ERR_LOCK, "pkl_close: failed to lock mutex");
+    return PKL_ERR_LOCK;
   }
+#endif
 
   pkl_runtime_cleanup(pexec);
 
-  if (pthread_mutex_unlock(&pexec->graal_mutex) != 0) {
-    perror("pkl_close: couldn't unlock mutex");
-    return -1;
+#ifdef _WIN32
+  LeaveCriticalSection(&pexec->mutex);
+  DeleteCriticalSection(&pexec->mutex);
+#else
+  if (pthread_mutex_unlock(&pexec->mutex) != 0) {
+    fprintf(stderr, "pkl_close: fatal: failed to unlock mutex.\n");
+    abort();
   }
 
-  if (pthread_mutex_destroy(&pexec->graal_mutex) != 0) {
-    perror("pkl_close: couldn't destroy mutex");
-    return -1;
+  if (pthread_mutex_destroy(&pexec->mutex) != 0) {
+    fprintf(stderr, "pkl_close: fatal: failed to destroy mutex.\n");
+    abort();
   }
+#endif
 
   free(pexec);
 
   return 0;
 };
 
-char* pkl_version(pkl_exec_t *pexec) {
-  if (pexec == NULL) {
-    perror("pkl_version: pexec is NULL");
-    return NULL;
+const char *pkl_version() {
+  return PKL_VERSION;
+}
+
+const char *pkl_error_description(int error) {
+  switch (error) {
+    case PKL_ERR_NOALLOC: return "Memory allocation failed";
+    case PKL_ERR_LOCK: return "Failed to lock, unlock, or destroy the mutex";
+    default: return "Unknown error";
   }
+}
 
-  if (pthread_mutex_lock(&pexec->graal_mutex) != 0) {
-    perror("pkl_version: couldn't lock mutex");
-    return NULL;
-  }
+const char *pkl_get_last_error_message() {
+  return pkl_last_error_message;
+}
 
-  char *version = pkl_internal_version(pexec->graal_isolatethread);
-
-  if (pthread_mutex_unlock(&pexec->graal_mutex) != 0) {
-    perror("pkl_version: couldn't unlock mutex");
-    return NULL;
-  }
-
-  return version;
+int pkl_get_last_error() {
+  return pkl_last_error_code;
 }

@@ -52,6 +52,6 @@ class LibPklTest : AbstractServerTest() {
   @Test
   fun testVersionString() {
     val currentVersion = Release.current().version.toString()
-    assertThat(LibPklJNA.INSTANCE.pkl_version(delegate.pexec!!)).isEqualTo(currentVersion)
+    assertThat(LibPklJNA.INSTANCE.pkl_version()).isEqualTo(currentVersion)
   }
 }

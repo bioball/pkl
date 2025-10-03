@@ -47,9 +47,14 @@ enum class Target(val os: OS, val arch: Arch, val musl: Boolean) {
       } else "$os-$arch"
     }
 
-  enum class Arch(private val simpleName: String) {
-    AARCH64("aarch64"),
-    AMD64("amd64");
+  enum class Arch(
+    /** What we call this arch */
+    val simpleName: String,
+    /** What the C compiler calls this arch */
+    val cCompilerName: String,
+  ) {
+    AARCH64("aarch64", "arm64"),
+    AMD64("amd64", "x86_64");
 
     override fun toString() = simpleName
 
@@ -63,10 +68,15 @@ enum class Target(val os: OS, val arch: Arch, val musl: Boolean) {
     }
   }
 
-  enum class OS(val simpleName: String, val sharedLibrarySuffix: String, val displayName: String) {
-    MacOS("macos", "dylib", "macOS"),
-    Linux("linux", "so", "Linux"),
-    Windows("windows", "dll", "Windows");
+  enum class OS(
+    val simpleName: String,
+    val sharedLibraryExtension: String,
+    val staticLibraryExtension: String,
+    val displayName: String,
+  ) {
+    MacOS("macos", "dylib", "a", "macOS"),
+    Linux("linux", "so", "a", "Linux"),
+    Windows("windows", "dll", "lib", "Windows");
 
     override fun toString(): String = simpleName
 

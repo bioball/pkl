@@ -14,27 +14,30 @@
  * limitations under the License.
  */
 // pkl.h
+#ifndef PKL_H
+#define PKL_H
 
-#include <pthread.h>
-#include <graal_isolate.h>
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#define PKL_ERR_NOALLOC   1     /* Failed to allocate a value */
+#define PKL_ERR_LOCK      2     /* Failed to craete a mutex, or acquire a lock on a mutex */
 
 /**
  * Pkl executor instance that manages communication with the Pkl runtime.
  *
  * Instances should be created via pkl_init() and destroyed via pkl_close().
  *
- * All operations on this struct should be considered thread-safe due to
- * internal synchronization via the graal_mutex.
+ * All operations on this struct are considered thread-safe and are synchronized via a mutex.
  */
-typedef struct PKL_EXEC_T {
-  pthread_mutex_t graal_mutex;
-  graal_isolatethread_t *graal_isolatethread;
-} pkl_exec_t;
+typedef struct __pkl_exec_t pkl_exec_t;
 
 /**
  * The callback that gets called when a message is received from Pkl.
  *
- * Messages must be deserialized to Pkl's Message Passing API: https://pkl-lang.org/main/current/bindings-specification/message-passing-api.html
+ * Messages must be deserialized to Pkl's Message Passing API: 
+ * https://pkl-lang.org/main/current/bindings-specification/message-passing-api.html
  *
  * @param length    The length the message bytes
  * @param message   The message itself
@@ -44,7 +47,7 @@ typedef void (*PklMessageResponseHandler)(int length, char *message, void *userD
 
 /**
  * Initialises and allocates a Pkl executor.
- *
+ * 
  * @param handler   The callback that gets called when a message is received from Pkl.
  * @param userData  User-defined data that gets passed to handler.
  *
@@ -55,13 +58,14 @@ pkl_exec_t *pkl_init(PklMessageResponseHandler handler, void *userData);
 /**
  * Send a message to Pkl, providing the length and a pointer to the first byte.
  *
- * Messages must be serialized to Pkl's Message Passing API: https://pkl-lang.org/main/current/bindings-specification/message-passing-api.html
+ * Messages must be serialized to Pkl's Message Passing API:
+ * https://pkl-lang.org/main/current/bindings-specification/message-passing-api.html
  *
  * @param pexec     The Pkl executor instance.
  * @param length    The length of the message, in bytes.
  * @param message   The message to send to Pkl.
  *
- * @return -1 on failure, 0 on success.
+ * @return 0 on success, -1 if `pexec` or `message` are NULL, and an error code otherwise.
  */
 int pkl_send_message(pkl_exec_t *pexec, int length, char *message);
 
@@ -71,15 +75,33 @@ int pkl_send_message(pkl_exec_t *pexec, int length, char *message);
  *
  * @param pexec     The Pkl executor instance.
  *
- * @return -1 on failure, 0 on success.
+ * @return 0 on success, -1 if `pexec` is NULL, and an error code otherwise.
  */
 int pkl_close(pkl_exec_t *pexec);
 
 /**
  * Returns the version of Pkl in use.
  *
- * @param pexec     The Pkl executor instance.
- *
  * @return a string with the version information.
  */
-char* pkl_version(pkl_exec_t *pexec);
+const char* pkl_version();
+
+/**
+ * Returns a string description of a Pkl error code.
+ */
+const char* pkl_error_description(int error);
+
+/**
+ * Returns the error code of the last error.
+ */
+int pkl_get_last_error();
+
+/**
+ * Returns the last error message.
+ */
+const char *pkl_get_last_error_message();
+
+#if defined(__cplusplus)
+}
+#endif
+#endif
