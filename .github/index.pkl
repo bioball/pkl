@@ -196,3 +196,15 @@ release {
       }
     } |> toWorkflowJobs
 }
+
+dependabot {
+  updates {
+    new {
+      `package-ecosystem` = "gradle"
+      directory = "/"
+      schedule {
+        interval = "weekly"
+      }
+    }
+  }
+}
