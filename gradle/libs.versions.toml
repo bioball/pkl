@@ -33,7 +33,7 @@ junit = "5.+"
 junitPlatform = "1.+"
 kotlin = "2.2.20"
 # 1.7+ generates much more verbose code
-kotlinPoet = "1.6.+"
+kotlinPoet = "2.2.+"
 kotlinxHtml = "0.11.0"
 kotlinxSerialization = "1.8.0"
 kotlinxCoroutines = "1.+"
