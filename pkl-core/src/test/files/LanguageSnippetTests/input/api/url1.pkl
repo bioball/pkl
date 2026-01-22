@@ -1,0 +1,9 @@
+amends "../snippetTest.pkl"
+
+import "pkl:net.url"
+
+examples {
+  ["parse"] {
+    url.parse("http://example.com")
+  }
+}

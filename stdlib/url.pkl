@@ -1,0 +1,195 @@
+/// Utilities for working with URLs.
+@Since { version = "0.31.0" }
+@ModuleInfo { minPklVersion = "0.31.0" }
+module pkl.url
+
+import "pkl:math"
+
+/// Parses [str] as a URL.
+///
+/// If the input is not valid, throws an error.
+external const function parse(str: String): Url
+
+/// Parses [str] as a [Url].
+///
+/// If the invalid is not valid, returns [null].
+external const function parseOrNull(str: String): Url?
+
+/// Parse [str] as an `application/x-www-form-urlencoded` string into a structured mapping.
+external const function parseQuery(str: String): SearchParams
+
+/// Renders the provided query string as `application/x-www-form-urlencoded`.
+external const function renderQuery(query: SearchParams): String
+
+/// Tells if [str] if a valid URL string or not.
+external const function isValid(str: String): Boolean
+
+/// Encodes [str] using percent-encoding to make it safe to literal use as a URL component.
+///
+/// All characters except for alphanumeric characters, and the characters `-_.!~*'()` are
+/// percent-encoded.
+///
+/// Follows the rules for the `encodeURIComponent` function as described by
+/// [ECMA-262 Section 15.1.3.4](https://262.ecma-international.org/5.1/#sec-15.1.3.4).
+///
+/// Facts:
+/// ```
+/// encodeComponent("https://example.com/some path") == "https%3A%2F%2example.com%2Fsome%20path"
+/// ```
+external const function encodeUriComponent(str: String): String
+
+/// Encodes [str] using percent-encoding bytes to make it safe for the literal use as a URL.
+///
+/// All characters except for alphanumeric chracters, and the chracters `!#$&'()*+,-./:;=?@_~`
+/// are [percent-encoded](https://en.wikipedia.org/wiki/Percent-encoding).
+///
+/// Follows the rules for the `encodeURI` function as described by
+/// [ECMA-262](https://262.ecma-international.org/5.1/#sec-15.1.3.3).
+///
+/// Facts:
+/// ```
+/// encodeUri("https://example.com/some path/") == "https://example.com/some%20path"
+/// ```
+///
+external const function encodeUri(str: String): String
+
+/// Encodes [str] using [percent encoding](https://en.wikipedia.org/wiki/Percent-encoding).
+external const function percentEncode(str: String): String
+
+/// Decodes [str] from [percent encoding](https://en.wikipedia.org/wiki/Percent-encoding).
+external const function percentDecode(str: String): String
+
+/// A parsed URL (technically a _URI reference_), as defined by
+/// [RFC-3986](https://datatracker.ietf.org/doc/html/rfc3986).
+///
+/// Parse with [parse] or [parseOrNull].
+///
+/// A URL generally has form:
+/// ```
+/// [scheme:][//[userinfo@]host][/]path[?query][#fragment]
+/// ```
+///
+/// Use [toString][Any.toString] to render this back into the string format.
+class Url {
+  /// The scheme component, without the trailing `:`.
+  ///
+  /// For example, the scheme of `https://example.com` is `https`.
+  ///
+  /// The scheme is considered case-insensitive, and by convention should be represented using
+  /// all lowercase characters.
+  ///
+  /// When [normalized], the scheme is converted to lowercase.
+  scheme: String(matches(Regex("[a-zA-Z][a-zA-Z0-9+.-]*")))?
+
+  /// The user information subcomponent of the [authority] component.
+  ///
+  /// The userinfo subcomponent may consist of a user name and, optionally,
+  /// scheme-specific information about how to gain authorization to access
+  /// the resource.
+  /// The user information, if present, is followed by a commercial at-sign ("@") that delimits it
+  /// from the [host].
+  fixed userinfo: String? = authority?.userinfo
+
+  /// The hostname portion of the authority component.
+  fixed hostname: String? = authority?.hostname
+
+  /// The [hostname] and [port] subcomponents of the URL.
+  fixed host: String? = authority?.host
+
+  /// The port portion of the authority component.
+  fixed port: UInt16? = authority?.port
+
+  authority: Authority?
+
+  /// The decoded path component.
+  path: String = pathComponents.join("/")
+
+  /// The individual path components.
+  fixed pathComponents: Listing<String> =
+    rawPath.split("/").map((it) -> percentDecode(it)).toListing()
+
+  /// The percent-ennocded path.
+  ///
+  /// This is the original path segment if parsed from [parse] or [parseOrNull].
+  fixed encodedPath: String(percentDecode(this) == path) = encodeUriComponent(path)
+
+  /// The decoded fragment section of this URL,
+  fragment: String?
+
+  /// The decoded query component, without the `?`.
+  query: String?
+
+  /// Parsed query values, using `application/x-www-form-urlencoded`.
+  fixed searchParams: SearchParams? = query?.ifNonNull((it) -> parseQuery(it as String))
+
+  /// Tells if this [Url] is an absolute URL.
+  ///
+  /// A URL is absolute if its scheme component is set.
+  hidden fixed isAbsolute: Boolean = scheme != null
+
+  /// The normalized representatioh of this URL.
+  ///
+  /// Follows the rules described in
+  /// [RFC 3986 Section 6.2.2](https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2).
+  external hidden normalized: Url
+
+  /// Tells if this is semantically equivalent to [other].
+  ///
+  /// Two URLs are equivalent if their normalized forms are equivalent.
+  ///
+  /// Facts:
+  ///
+  /// ```
+  /// parse("example://a/b/c/%7Bfoo%7D").isEquivalentTo("eXAMPLE://a/./b/../b/%63/%7bfoo%7d")
+  /// ```
+  function isEquivalentTo(other: Url) = normalized == other.normalized
+
+  /// Returns a new [Url] that resolves [other] against this base [Url].
+  ///
+  /// If [other] is a string, it is first parsed into a [Url].
+  /// Throws if [other] cannot be parsed as a [Url].
+  external function resolve(other: String | Url): Url
+}
+
+class Authority {
+  /// The user information subcomponent of the authority component.
+  ///
+  /// The userinfo subcomponent may consist of a user name and, optionally, scheme-specific
+  /// information about how to gain authorization to access the resource.
+  /// The user information, if present, is followed by a commercial at-sign ("@") that delimits it
+  /// from the [host].
+  userinfo: String?
+
+  /// The host portion of the authority component.
+  host: String?
+
+  fixed hostname: String? = host?.split(":")?.getOrNull(0)
+
+  /// The port portion of the authority component.
+  fixed port: UInt16? = host?.split(":")?.getOrNull(1)?.toInt()
+
+  function toString() =
+    new Listing {
+      when (userinfo != null) {
+        "\(userinfo)@"
+      }
+      when (hostname != null) {
+        hostname
+      }
+      when (port != null) {
+        ":\(port)"
+      }
+    }.join("")
+}
+
+/// Values parsed from `application/x-www-form-urlencoded` encoding.
+///
+/// Recurring key-value pairs are parsed as an entry whose value is a [Listing], whereas tuples that
+/// occur once is parsed as an entry whose value is a [String]. 
+///
+/// Example:
+/// ```
+/// parseQuery("birds=pigeon&birds=duck") == new SearchParams { ["birds"] { "pigeon"; "duck" } }
+/// parseQuery("birds=pigeon") == new SearchParams { ["birds"] = "pigeon" }
+/// ```
+typealias SearchParams = Mapping<String, *Listing<String>(isNotEmpty) | String>

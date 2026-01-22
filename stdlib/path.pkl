@@ -1,0 +1,37 @@
+module pkl.path
+
+import "pkl:path" as Path
+import "pkl:url"
+
+/// The platform-specific path delimiter.
+///
+/// On Windows, it's `;`.
+/// On POSIX, it's `:`.
+external delimiter: Char
+
+/// The platform-specific path separator.
+///
+/// On Windows, it's `\`.
+/// On POSIX, it's `/`.
+external separator: Char
+
+/// Joins the elements of the path together using [separator].
+external function join(parts: List<String>) = normalize(parts.join(separator))
+
+external function normalize(path: String)
+
+external function dirname(path: String)
+
+/// A path library that handles paths per Windows rules.
+external windows: Path
+
+/// A path library that handles paths per POSIX rules.
+external posix: Path
+
+/// Converts [Url] to a path.
+external function fromUrl(url: FileUrl): String
+
+/// Converts this path to a `file:` URL.
+external function toUri(): FileUrl
+
+typealias FileUrl = url.Url(scheme == "file")
