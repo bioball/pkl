@@ -19,6 +19,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import org.pkl.core.Loggers;
 import org.pkl.core.SecurityManagers;
 import org.pkl.core.StackFrameTransformers;
@@ -29,8 +30,15 @@ import org.pkl.core.module.ModuleKeys;
 import org.pkl.core.module.ResolvedModuleKey;
 
 public abstract class StdLibModule {
+  private static final Consumer<VmTyped> NOOP = (ignored) -> {};
+
   @TruffleBoundary
   protected static void loadModule(URI uri, VmTyped instance) {
+    loadModule(uri, instance, NOOP);
+  }
+
+  @TruffleBoundary
+  protected static void loadModule(URI uri, VmTyped instance, Consumer<VmTyped> consumer) {
     // evaluate eagerly to increase thread safety
     // (stdlib module objects are statically shared singletons when running on JVM)
     // and ensure compile-time evaluation in AOT mode
@@ -67,6 +75,7 @@ public abstract class StdLibModule {
               // (stdlib module objects are statically shared singletons when running on JVM)
               // and ensure compile-time evaluation in AOT mode
               instance.force(false, true);
+              consumer.accept(instance);
             })
         .close();
   }

@@ -22,6 +22,8 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import kotlin.io.path.createParentDirectories
@@ -45,6 +47,7 @@ import org.pkl.core.module.ModuleKeyFactories
 import org.pkl.core.module.ModuleKeyFactory
 import org.pkl.core.module.ResolvedModuleKey
 import org.pkl.core.project.Project
+import org.pkl.core.runtime.BaseModule
 import org.pkl.core.util.IoUtils
 
 class EvaluatorTest {
@@ -627,6 +630,28 @@ class EvaluatorTest {
     )
 
     assertThat((evaluator as EvaluatorImpl).isInstrumentationEverUsed()).isFalse
+  }
+
+  @Test
+  fun `concurrent evals from different evaluators`() {
+    val threadCount = 4
+    val service = Executors.newFixedThreadPool(threadCount)
+    val startLatch = CountDownLatch(1)
+    val futures = buildList {
+      for (i in 0 .. threadCount) {
+        val fut =
+          service.submit {
+            startLatch.await()
+            EvaluatorBuilder.preconfigured().build().use { evaluator ->
+              evaluator.evaluateOutputText(text("foo = 1"))
+            }
+          }
+        add(fut)
+      }
+    }
+    startLatch.countDown()
+    futures.forEach { it.get() }
+    service.shutdown()
   }
 
   private fun checkModule(module: PModule) {

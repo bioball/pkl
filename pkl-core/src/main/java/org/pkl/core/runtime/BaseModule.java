@@ -24,7 +24,28 @@ public final class BaseModule extends StdLibModule {
   static final VmTyped instance = VmUtils.createEmptyModule();
 
   static {
-    loadModule(pklBaseUri, instance);
+//    loadModule(pklBaseUri, instance);
+    loadModule(
+        pklBaseUri,
+        instance,
+        (module) -> {
+          try {
+            // Ensure that truffle nodes are fully initialized
+            // (e.g. ensure that the let body in `Module.output.renderer` is resolved)
+            //
+            // Mitigates a thread safety issue where truffle nodes
+            var output = VmUtils.readModuleOutput(module);
+            VmUtils.readBytesProperty(output);
+          } catch (VmEvalException exception) {
+            // valid error if the `prop:` scheme is disallowed per security manager rules, or the
+            // resource reader
+            // is not available.
+            if (!exception.getMessage().equals("noResourceReaderRegistered")
+                && !exception.getMessage().equals("resourceNotInAllowList")) {
+              throw exception;
+            }
+          }
+        });
   }
 
   public static VmTyped getModule() {
