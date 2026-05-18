@@ -15,13 +15,13 @@
  */
 package org.pkl.cli.repl
 
-private val cmdRegex = Regex(":(\\p{Alpha}*)(\\p{Space}*)(.*)", RegexOption.DOT_MATCHES_ALL)
+private val cmdRegex = Regex("(:\\p{Alpha}*)(\\p{Space}*)(.*)", RegexOption.DOT_MATCHES_ALL)
 
 internal fun getMatchingCommands(input: String): List<ParsedCommand> {
   val match = cmdRegex.matchEntire(input) ?: return listOf()
   val (cmd, ws, arg) = match.destructured
   return Command.entries
-    .filter { it.toString().lowercase().startsWith(cmd) }
+    .filter { it.name.startsWith(cmd) }
     .map { ParsedCommand(it, cmd, ws, arg) }
 }
 
@@ -32,14 +32,67 @@ internal data class ParsedCommand(
   val arg: String,
 )
 
-internal enum class Command {
-  Clear,
-  Examples,
-  Force,
-  Help,
-  Load,
-  Quit,
-  Reset;
+internal sealed class Command {
+  val name: String get() = ":" + javaClass.simpleName.lowercase()
 
-  override fun toString() = name.lowercase()
+  abstract val description: String
+
+  open val display: String = name
+
+  companion object {
+    val entries: List<Command> = listOf(
+      Clear,
+      Examples,
+      Force,
+      Help,
+      Load,
+      Quit,
+      Reset
+    )
+  }
+
+  object Clear : Command() {
+    override val description: String = "Clear the screen."
+  }
+
+  object Examples : Command() {
+    override val description: String = "Show code examples (use copy and paste to run them)."
+  }
+
+  object Force : Command() {
+    override val description: String = "Force eager evaluation of a value."
+    override val display: String = ":force <expr>"
+  }
+
+  object Help : Command() {
+    override val description: String = "Show help text."
+  }
+
+  object Load : Command() {
+    override val description: String =
+      "Load <file> from local file system. `:load path/to/config.pkl`."
+
+    override val display: String = ":load <file>"
+  }
+
+  object Quit : Command() {
+    override val description: String = "Quit this program."
+  }
+
+  object Reset : Command() {
+    override val description: String = "Reset the environment to its initial state."
+  }
 }
+
+//
+//internal enum class Command {
+//  Clear,
+//  Examples,
+//  Force,
+//  Help,
+//  Load,
+//  Quit,
+//  Reset;
+//
+//  override fun toString() = name.lowercase()
+//}

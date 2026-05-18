@@ -15,6 +15,7 @@
  */
 package org.pkl.cli.repl
 
+import org.pkl.core.Platform
 import org.pkl.core.Release
 
 internal object ReplMessages {
@@ -26,29 +27,27 @@ internal object ReplMessages {
   """
       .trimIndent()
 
-  val help =
-    """
-    `<expr>`           Evaluate <expr> and print the result. `1 + 3`
-    `<name> = <expr>`  Evaluate <expr> and assign the result to property <name>. `msg = "howdy"`
-    `:clear`           Clear the screen.
-    `:examples`        Show code examples (use copy and paste to run them).
-    `:force <expr>`    Force eager evaluation of a value.
-    `:help`            Show this help.
-    `:load <file>`     Load <file> from local file system. `:load path/to/config.pkl`
-    `:quit`            Quit this program.
-    `:reset`           Reset the environment to its initial state.
+  val help = buildString { 
+    appendLine("`<expr>`           Evaluate <expr> and print the result. `1 + 3`")
+    appendLine("`<name> = <expr>`  Evaluate <expr> and assign the result to property <name>. `msg = \"howdy\"`")
+    for (command in Command.entries) {
+      append("`${command.name}".padEnd(19, ' '))
+      appendLine(command.description)
+    }
+    append(
+      """
 
-    Tips:
-    * Commands can be abbreviated. `:h`
-    * Commands can be completed. `:<TAB>`
-    * File paths can be completed. `:load <TAB>`
-    * Expressions can be completed. `"hello".re<TAB>`
-    * Multiple declarations and expressions can be evaluated at once. `a = 1; b = a + 2`
-    * Incomplete input will be continued on the next line.
-    * Multi-line programs can be copy-pasted into the REPL.
+      Tips:
+      * Commands can be abbreviated. `:h`
+      * Commands can be completed. `:<TAB>`
+      * File paths can be completed. `:load <TAB>`
+      * Expressions can be completed. `"hello".re<TAB>`
+      * Multiple declarations and expressions can be evaluated at once. `a = 1; b = a + 2`
+      * Incomplete input will be continued on the next line.
+      * Multi-line programs can be copy-pasted into the REPL.
 
-    """
-      .trimIndent()
+      """.trimIndent())
+  }
 
   val examples: String =
     """
@@ -100,5 +99,5 @@ internal object ReplMessages {
   """
       .trimIndent()
 
-  private fun isMacOs() = System.getProperty("os.name").equals("Mac OS X", ignoreCase = true)
+  private fun isMacOs() = Platform.current().operatingSystem().name == "macOS"
 }

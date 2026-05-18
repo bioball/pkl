@@ -28,6 +28,7 @@ import org.jline.reader.LineReaderBuilder
 import org.jline.reader.UserInterruptException
 import org.jline.reader.impl.completer.AggregateCompleter
 import org.jline.reader.impl.history.DefaultHistory
+import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
 import org.jline.utils.AttributedString
 import org.jline.utils.InfoCmp
@@ -50,8 +51,13 @@ class PklHighlighter : Highlighter {
   override fun setErrorIndex(idx: Int) {}
 }
 
-internal class Repl(workingDir: Path, private val server: ReplServer, private val color: Boolean) {
-  private val terminal = TerminalBuilder.builder().apply { jni(true) }.build()
+internal class Repl(
+  workingDir: Path,
+  private val server: ReplServer,
+  private val color: Boolean,
+  private val terminal: Terminal = TerminalBuilder.builder().jni(true).build(),
+  private val printWelcome: Boolean = true
+) {
   private val history = DefaultHistory()
   private val reader =
     LineReaderBuilder.builder()
@@ -61,7 +67,13 @@ internal class Repl(workingDir: Path, private val server: ReplServer, private va
         if (color) {
           highlighter(PklHighlighter())
         }
-        completer(AggregateCompleter(CommandCompleter, FileCompleter(workingDir)))
+        completer(
+          AggregateCompleter(
+            CommandCompleter,
+            FileCompleter(workingDir),
+            ObjectMemberCompleter(server, ::nextRequestId)
+          )
+        )
         option(Option.DISABLE_EVENT_EXPANSION, true)
         variable(LineReader.HISTORY_FILE, (IoUtils.getPklHomeDir().resolve("repl-history")))
       }
@@ -72,7 +84,7 @@ internal class Repl(workingDir: Path, private val server: ReplServer, private va
   private var maybeQuit = false
   private var nextRequestId = 0
 
-  private fun String.faint(): String {
+  internal fun String.faint(): String {
     val sb = AnsiStringBuilder(color)
     sb.append(AnsiCode.FAINT, this)
     return sb.toString()
@@ -82,8 +94,10 @@ internal class Repl(workingDir: Path, private val server: ReplServer, private va
     // JLine 2 history file is incompatible with JLine 3
     IoUtils.getPklHomeDir().resolve("repl-history.bin").deleteIfExists()
 
-    println(ReplMessages.welcome)
-    println()
+    if (printWelcome) {
+      println(ReplMessages.welcome)
+      println()
+    }
 
     var inputBuffer = ""
 

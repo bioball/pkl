@@ -26,6 +26,9 @@ import org.jline.terminal.Terminal
 import org.jline.utils.AttributedStringBuilder
 import org.jline.utils.OSUtils
 import org.jline.utils.StyleResolver
+import org.pkl.core.repl.ReplRequest
+import org.pkl.core.repl.ReplResponse
+import org.pkl.core.repl.ReplServer
 
 /**
  * Originally copied from:
@@ -96,8 +99,10 @@ internal abstract class JLineFileNameCompleter : Completer {
               }
             }
           }
-      } catch (ignored: IOException) {}
-    } catch (ignored: Exception) {}
+      } catch (_: IOException) {
+      }
+    } catch (_: Exception) {
+    }
   }
 
   protected open fun accept(path: Path): Boolean {
@@ -174,9 +179,57 @@ internal class FileCompleter(override val userDir: Path) : JLineFileNameComplete
 
 internal object CommandCompleter : Completer {
   private val commandCandidates: List<Candidate> =
-    Command.entries.map { Candidate(":" + it.toString().lowercase()) }
+    Command.entries.map { entry ->
+      Candidate(entry.name, entry.display, null, entry.description, null, null, true, 0)
+    }
 
   override fun complete(reader: LineReader, line: ParsedLine, candidates: MutableList<Candidate>) {
     if (line.wordIndex() == 0) candidates.addAll(commandCandidates)
+  }
+}
+
+// known limitations:
+// - no completion across continuation lines
+// - no completion for property projection (e.g. `foo*.bar`)
+// - no direct completion of complete exprs that don't end
+//   in a property name (need to insert `.`, e.g. `foo[bar].` or `100.`)
+internal class ObjectMemberCompleter(
+  private val client: ReplServer,
+  private val nextRequestId: () -> String
+) : Completer {
+  override fun complete(
+    reader: LineReader,
+    line: ParsedLine,
+    candidates: MutableList<Candidate>
+  ) {
+    if (line.wordIndex() > 0) {
+      return
+    }
+    val lineText = line.line()
+    val target = when {
+      lineText.endsWith('.') -> {
+        val subStr = lineText.dropLast(1)
+        val subIdx = subStr.indexOfLast { !Character.isJavaIdentifierPart(it) }
+        if (subIdx < 0 || !Character.isWhitespace(subStr[subIdx])
+          && subStr[subIdx] !in listOf(',', ';', ':', '=', '(', '['))
+          subStr
+        else
+          subStr.substring(subIdx + 1)
+      }
+      else -> ""
+    }
+    val response = sendRequest(ReplRequest.Completion(nextRequestId(), target))
+    for (member in response.members) {
+      candidates.add(Candidate(member))
+    }
+  }
+
+  private fun sendRequest(request: ReplRequest.Completion): ReplResponse.Completion {
+    val responses = client.handleRequest(request)
+    when (val response = responses.single()) {
+      is ReplResponse.Completion -> return response
+      is ReplResponse.InternalError -> throw InternalError(response.message, response.cause)
+      else -> throw InternalError("Unexpected response: $response")
+    }
   }
 }
