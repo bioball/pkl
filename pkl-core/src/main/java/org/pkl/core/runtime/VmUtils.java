@@ -61,6 +61,7 @@ import org.pkl.core.module.ModuleKey;
 import org.pkl.core.module.ModuleKeys;
 import org.pkl.core.module.ResolvedModuleKey;
 import org.pkl.core.util.EconomicMaps;
+import org.pkl.core.util.IoUtils;
 import org.pkl.parser.Parser;
 import org.pkl.parser.ParserError;
 import org.pkl.parser.syntax.Expr;
@@ -73,8 +74,25 @@ public final class VmUtils {
 
   public static final URI REPL_TEXT_URI = URI.create(REPL_TEXT);
 
-  private static final Engine PKL_ENGINE =
-      Engine.newBuilder("pkl").option("engine.WarnInterpreterOnly", "false").build();
+  private static final Engine PKL_ENGINE = makePklEngine();
+
+  private static Engine makePklEngine() {
+    var builder =
+        Engine.newBuilder("pkl")
+            .option("engine.WarnInterpreterOnly", "false")
+            .allowExperimentalOptions(true);
+    var profileOutput = System.getenv("PKL_PROFILE_OUTPUT");
+    if (profileOutput != null) {
+      var resolvedOutput =
+          IoUtils.getCurrentWorkingDir()
+              .resolve(profileOutput)
+              .normalize()
+              .toAbsolutePath()
+              .toString();
+      builder.option("pkl-profiler.Output", resolvedOutput);
+    }
+    return builder.build();
+  }
 
   private static final Pattern DOC_COMMENT_LINE_START =
       Pattern.compile(
