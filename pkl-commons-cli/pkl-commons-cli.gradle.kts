@@ -19,11 +19,12 @@ plugins {
   id("pklPublishLibrary")
 }
 
+val reachability: SourceSet = sourceSets.create("generateReachabilityMetadata")
+
 val svmClasspath: Configuration = configurations.create("svmClasspath")
 
 // used by pklNativeExecutable.gradle.kts
-@Suppress("unused")
-val svm: SourceSet = sourceSets.create("svm") { compileClasspath = svmClasspath }
+sourceSets.create("svm") { compileClasspath = svmClasspath }
 
 dependencies {
   api(projects.pklCore)
@@ -31,6 +32,7 @@ dependencies {
   implementation(libs.cliktMarkdown)
 
   implementation(projects.pklCommons)
+  implementation(projects.pklCerts)
   testImplementation(projects.pklCommonsTest)
 
   svmClasspath(libs.svm)

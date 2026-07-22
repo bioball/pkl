@@ -17,21 +17,40 @@ package org.pkl.core.http;
 
 import static org.pkl.core.util.IoUtils.validateRewriteRule;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import org.jspecify.annotations.Nullable;
 import org.pkl.core.Release;
+import org.pkl.core.http.CertificateLoader.ByteArrayCertificateLoader;
+import org.pkl.core.http.CertificateLoader.PathCertificateLoader;
 import org.pkl.core.http.HttpClient.Builder;
+import org.pkl.core.util.ErrorMessages;
+import org.pkl.core.util.Exceptions;
 import org.pkl.core.util.GlobResolver;
 import org.pkl.core.util.GlobResolver.InvalidGlobPatternException;
 import org.pkl.core.util.IoUtils;
@@ -49,6 +68,7 @@ final class HttpClientBuilder implements HttpClient.Builder {
   // gives the same `Pattern` instance for an existing glob pattern.
   // use LinkedHashMap to preserve insertion order.
   private Map<Pattern, Map<String, List<String>>> headers = new LinkedHashMap<>();
+  private @Nullable SSLContext sslContext;
 
   HttpClientBuilder() {
     var release = Release.current();
@@ -82,6 +102,25 @@ final class HttpClientBuilder implements HttpClient.Builder {
   @Override
   public Builder addCertificates(byte[] certificateBytes) {
     this.certificateBytes.add(ByteBuffer.wrap(certificateBytes));
+    return this;
+  }
+
+  @Override
+  public Builder addCertificatesFromServiceProviders() {
+    var spi = IoUtils.createServiceLoader(CertificateLoader.class);
+    for (var loader : spi) {
+      if (!loader.isEnabled()) {
+        continue;
+      }
+      if (loader instanceof ByteArrayCertificateLoader bacl) {
+        addCertificates(bacl.getBytes());
+      } else if (loader instanceof PathCertificateLoader pcl) {
+        var paths = pcl.getPaths();
+        for (var path : paths) {
+          addCertificates(path);
+        }
+      }
+    }
     return this;
   }
 
@@ -170,6 +209,12 @@ final class HttpClientBuilder implements HttpClient.Builder {
   }
 
   @Override
+  public Builder setSslContext(SSLContext sslContext) {
+    this.sslContext = sslContext;
+    return this;
+  }
+
+  @Override
   public HttpClient build() {
     return doBuild().get();
   }
@@ -179,14 +224,85 @@ final class HttpClientBuilder implements HttpClient.Builder {
     return new LazyHttpClient(doBuild());
   }
 
+  private static List<Certificate> gatherCertificates(
+      CertificateFactory factory, List<Path> certificateFiles, List<ByteBuffer> certificateBytes) {
+    var certificates = new ArrayList<Certificate>();
+    for (var file : certificateFiles) {
+      try (var stream = Files.newInputStream(file)) {
+        collectCertificates(certificates, factory, stream, file);
+      } catch (NoSuchFileException e) {
+        throw new HttpClientException(ErrorMessages.create("cannotFindCertFile", file));
+      } catch (IOException e) {
+        throw new HttpClientException(
+            ErrorMessages.create("cannotReadCertFile", Exceptions.getRootReason(e)));
+      }
+    }
+    for (var byteBuffer : certificateBytes) {
+      var stream = new ByteArrayInputStream(byteBuffer.array());
+      collectCertificates(certificates, factory, stream, "<unavailable>");
+    }
+    return certificates;
+  }
+
+  private static void collectCertificates(
+      ArrayList<Certificate> anchors,
+      CertificateFactory factory,
+      InputStream stream,
+      Object source) {
+    Collection<X509Certificate> certificates;
+    try {
+      //noinspection unchecked
+      certificates = (Collection<X509Certificate>) factory.generateCertificates(stream);
+    } catch (CertificateException e) {
+      throw new HttpClientException(
+          ErrorMessages.create("cannotParseCertFile", source, Exceptions.getRootReason(e)));
+    }
+    if (certificates.isEmpty()) {
+      throw new HttpClientException(ErrorMessages.create("emptyCertFile", source));
+    }
+    anchors.addAll(certificates);
+  }
+
+  // https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#security-algorithm-implementation-requirements
+  private static SSLContext createSslContext(
+      List<Path> certificateFiles, List<ByteBuffer> certificateBytes) {
+    try {
+      if (certificateFiles.isEmpty() && certificateBytes.isEmpty()) {
+        // use JVM's built-in CA certificates
+        return SSLContext.getDefault();
+      }
+
+      var certFactory = CertificateFactory.getInstance("X.509");
+      List<Certificate> certs = gatherCertificates(certFactory, certificateFiles, certificateBytes);
+      var keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+      keystore.load(null);
+      for (var i = 0; i < certs.size(); i++) {
+        keystore.setCertificateEntry("Certificate" + i, certs.get(i));
+      }
+      var trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
+      trustManagerFactory.init(keystore);
+
+      var sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, trustManagerFactory.getTrustManagers(), new SecureRandom());
+
+      return sslContext;
+    } catch (GeneralSecurityException | IOException e) {
+      throw new HttpClientException(
+          ErrorMessages.create("cannotInitHttpClient", Exceptions.getRootReason(e)), e);
+    }
+  }
+
   private Supplier<HttpClient> doBuild() {
     // make defensive copy because Supplier may get called after builder was mutated
     var certificateFiles = List.copyOf(this.certificateFiles);
     var proxySelector =
         this.proxySelector != null ? this.proxySelector : java.net.ProxySelector.getDefault();
     return () -> {
-      var jdkClient =
-          new JdkHttpClient(certificateFiles, certificateBytes, connectTimeout, proxySelector);
+      var sslContext =
+          this.sslContext == null
+              ? createSslContext(certificateFiles, certificateBytes)
+              : this.sslContext;
+      var jdkClient = new JdkHttpClient(sslContext, connectTimeout, proxySelector);
       return new RequestRewritingClient(
           userAgent, requestTimeout, testPort, jdkClient, rewrites, headers);
     };

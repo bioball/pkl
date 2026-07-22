@@ -185,6 +185,16 @@ abstract class NativeImageBuild : DefaultTask() {
         add("--initialize-at-run-time=org.msgpack.core.buffer.DirectBufferAccess")
         // needed for jline-terminal-jni
         add("--initialize-at-run-time=org.jline.nativ,org.jline.terminal.impl.jni")
+        // needed to prevent baking in SSL context of build image
+        add("--initialize-at-run-time=sun.security.ssl.SSLContextImpl")
+        // org.pkl.certs.NativeCertificateLoader loads its native library (and declares a native
+        // method) in its class initializer, which must run in the actual running process rather
+        // than in the image builder's JVM, or the native call fails with UnsatisfiedLinkError at
+        // run time.
+        add(
+          "--initialize-at-run-time=org.pkl.certs.NativeCertificateLoader,org.pkl.certs.LinuxCertificateLoader"
+        )
+        add("--enable-native-access=org.graalvm.truffle")
         add("--no-fallback")
         add("-H:IncludeResources=org/pkl/core/stdlib/.*\\.pkl")
         add("-H:IncludeResources=org/jline/utils/.*")

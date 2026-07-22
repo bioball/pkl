@@ -16,9 +16,7 @@
 package org.pkl.core.http;
 
 import com.google.errorprone.annotations.ThreadSafe;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -27,25 +25,10 @@ import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.TrustManagerFactory;
 import org.pkl.core.util.ErrorMessages;
 import org.pkl.core.util.Exceptions;
 
@@ -74,13 +57,10 @@ final class JdkHttpClient implements HttpClient {
   }
 
   JdkHttpClient(
-      List<Path> certificateFiles,
-      List<ByteBuffer> certificateBytes,
-      Duration connectTimeout,
-      java.net.ProxySelector proxySelector) {
+      SSLContext sslContext, Duration connectTimeout, java.net.ProxySelector proxySelector) {
     underlying =
         java.net.http.HttpClient.newBuilder()
-            .sslContext(createSslContext(certificateFiles, certificateBytes))
+            .sslContext(sslContext)
             .connectTimeout(connectTimeout)
             .proxy(proxySelector)
             .followRedirects(Redirect.NEVER)
@@ -121,73 +101,5 @@ final class JdkHttpClient implements HttpClient {
     } catch (Throwable t) {
       throw new AssertionError(t);
     }
-  }
-
-  // https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#security-algorithm-implementation-requirements
-  private static SSLContext createSslContext(
-      List<Path> certificateFiles, List<ByteBuffer> certificateBytes) {
-    try {
-      if (certificateFiles.isEmpty() && certificateBytes.isEmpty()) {
-        // use JVM's built-in CA certificates
-        return SSLContext.getDefault();
-      }
-
-      var certFactory = CertificateFactory.getInstance("X.509");
-      List<Certificate> certs = gatherCertificates(certFactory, certificateFiles, certificateBytes);
-      var keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-      keystore.load(null);
-      for (var i = 0; i < certs.size(); i++) {
-        keystore.setCertificateEntry("Certificate" + i, certs.get(i));
-      }
-      var trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
-      trustManagerFactory.init(keystore);
-
-      var sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, trustManagerFactory.getTrustManagers(), new SecureRandom());
-
-      return sslContext;
-    } catch (GeneralSecurityException | IOException e) {
-      throw new HttpClientException(
-          ErrorMessages.create("cannotInitHttpClient", Exceptions.getRootReason(e)), e);
-    }
-  }
-
-  private static List<Certificate> gatherCertificates(
-      CertificateFactory factory, List<Path> certificateFiles, List<ByteBuffer> certificateBytes) {
-    var certificates = new ArrayList<Certificate>();
-    for (var file : certificateFiles) {
-      try (var stream = Files.newInputStream(file)) {
-        collectCertificates(certificates, factory, stream, file);
-      } catch (NoSuchFileException e) {
-        throw new HttpClientException(ErrorMessages.create("cannotFindCertFile", file));
-      } catch (IOException e) {
-        throw new HttpClientException(
-            ErrorMessages.create("cannotReadCertFile", Exceptions.getRootReason(e)));
-      }
-    }
-    for (var byteBuffer : certificateBytes) {
-      var stream = new ByteArrayInputStream(byteBuffer.array());
-      collectCertificates(certificates, factory, stream, "<unavailable>");
-    }
-    return certificates;
-  }
-
-  private static void collectCertificates(
-      ArrayList<Certificate> anchors,
-      CertificateFactory factory,
-      InputStream stream,
-      Object source) {
-    Collection<X509Certificate> certificates;
-    try {
-      //noinspection unchecked
-      certificates = (Collection<X509Certificate>) factory.generateCertificates(stream);
-    } catch (CertificateException e) {
-      throw new HttpClientException(
-          ErrorMessages.create("cannotParseCertFile", source, Exceptions.getRootReason(e)));
-    }
-    if (certificates.isEmpty()) {
-      throw new HttpClientException(ErrorMessages.create("emptyCertFile", source));
-    }
-    anchors.addAll(certificates);
   }
 }

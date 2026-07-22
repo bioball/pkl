@@ -91,6 +91,12 @@ public interface HttpClient extends AutoCloseable {
     Builder addCertificates(byte[] certificateBytes);
 
     /**
+     * Adds certificates from the registered service providers implementing {@link
+     * org.pkl.core.http.CertificateLoader}.
+     */
+    Builder addCertificatesFromServiceProviders();
+
+    /**
      * Sets a test server's listening port.
      *
      * <p>If set, requests that specify port 0 will be modified to use the given port. This is an
@@ -188,6 +194,15 @@ public interface HttpClient extends AutoCloseable {
      * @see Builder#setHeaders
      */
     Builder addHeaders(String globPattern, Map<String, List<String>> headers);
+
+    /**
+     * Sets the SSL context to use for HTTPS connections.
+     *
+     * <p>Supersedes {@link Builder#addCertificates}
+     *
+     * @since 0.33.0
+     */
+    Builder setSslContext(SSLContext sslContext);
 
     /**
      * Creates a new {@code HttpClient} from the current state of this builder.
