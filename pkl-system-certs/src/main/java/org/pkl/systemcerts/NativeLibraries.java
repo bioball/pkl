@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.pkl.certs;
+package org.pkl.systemcerts;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -35,7 +35,7 @@ public final class NativeLibraries {
       return System.mapLibraryName(name);
     }
 
-    // keep in sync with `Target.libraryFile` in pkl-certs.gradle.kts
+    // keep in sync with `Target.libraryFile` in pkl-system-certs.gradle.kts
     private URL resourcePath() {
       var platform = Platform.current();
       var path =

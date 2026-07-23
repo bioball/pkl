@@ -32,7 +32,7 @@ dependencies {
   implementation(libs.cliktMarkdown)
 
   implementation(projects.pklCommons)
-  implementation(projects.pklCerts)
+  implementation(projects.pklSystemCerts)
   testImplementation(projects.pklCommonsTest)
 
   svmClasspath(libs.svm)

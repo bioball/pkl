@@ -107,7 +107,7 @@ val generateReachabilityMetadata =
     )
 
     val outputDir =
-      layout.buildDirectory.file("resources/main/META-INF/native-image/org.pkl-lang/pkl-certs/")
+      layout.buildDirectory.file("resources/main/META-INF/native-image/org.pkl-lang/pkl-system-certs/")
     val outputFile = outputDir.map { it.asFile.resolve("reachability-metadata.json") }
     outputs.file(outputFile)
 
@@ -154,5 +154,16 @@ spotless {
     target("src/*/c/*.c", "src/*/c/*.h")
     targetExclude("src/main/c/org_pkl_certs_NativeCertificateLoader.h")
     eclipseCdt(libs.versions.eclipseCdtFormat.get())
+  }
+}
+
+publishing {
+  publications {
+    named<MavenPublication>("library") {
+      pom {
+        url.set("https://github.com/apple/pkl/tree/main/pkl-config-java")
+        description.set("Java config library based on the Pkl config language.")
+      }
+    }
   }
 }
