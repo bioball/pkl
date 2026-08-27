@@ -82,7 +82,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
 
   @SuppressWarnings("unused")
   @Specialization(
-      guards = {"getClass(defaultValue) == getDynamicClass()", "checkObjectCannotHaveParameters()"})
+      guards = {"getClass(defaultValue).isDynamicClass()", "checkObjectCannotHaveParameters()"})
   protected Object evalNullableDynamic(
       VirtualFrame frame,
       VmNull parent,
@@ -137,7 +137,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {
-        "getClass(defaultValue) == getListingClass()",
+        "getClass(defaultValue).isListingClass()",
         "checkListingCannotHaveParameters()"
       })
   protected Object evalNullableListing(
@@ -166,7 +166,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {
-        "getClass(defaultValue) == getMappingClass()",
+        "getClass(defaultValue).isMappingClass()",
         "checkMappingCannotHaveParameters()"
       })
   protected Object evalNullableMapping(
@@ -198,9 +198,8 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   protected Object evalNullableFunction(
       VirtualFrame frame,
       VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue,
-      @Cached(value = "createAmendFunctionNode(frame)", neverDefault = true)
-          AmendFunctionNode amendFunctionNode) {
+      @Cached("getNullDefaultValue(parent)") Object defaultValue,
+      @Cached("createAmendFunctionNode(frame)") AmendFunctionNode amendFunctionNode) {
     return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
   }
 

@@ -92,10 +92,12 @@ public abstract class ObjectLiteralNode extends ExpressionNode {
     return true;
   }
 
+  @Idempotent
   protected final boolean checkIsValidFunctionAmendment(Object parent) {
     return checkIsValidFunctionAmendment((VmFunction) parent);
   }
 
+  @Idempotent
   protected final boolean isFunction(Object value) {
     return value instanceof VmFunction;
   }
