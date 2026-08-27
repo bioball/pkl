@@ -32,7 +32,7 @@ import org.pkl.core.util.EconomicMaps;
  * Object literal that contains elements (and possibly properties) but not entries. Example: `new
  * foo { "pigeon" }`
  */
-@ImportStatic(BaseModule.class)
+@ImportStatic({BaseModule.class, VmUtils.class})
 public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
   private final ObjectMember[] elements;
 
@@ -94,10 +94,18 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
         parent.getLength() + elements.length);
   }
 
-  @Specialization
-  protected Object evalNull(VirtualFrame frame, VmNull parent) {
-    // assumes that Graal PE can handle recursive call to same node
-    return executeWithParent(frame, parent.getDefaultValue());
+  @SuppressWarnings("unused")
+  @Specialization(guards = "getClass(defaultValue) == getDynamicClass()")
+  protected Object evalNullableDynamic(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentDynamic = (VmDynamic) defaultValue;
+    return new VmDynamic(
+        frame.materialize(),
+        parentDynamic,
+        createMembers(parentDynamic.getLength()),
+        parentDynamic.getLength() + elements.length);
   }
 
   @Specialization(guards = "checkIsValidFunctionAmendment(parent)")
@@ -108,6 +116,18 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
           AmendFunctionNode amendFunctionNode) {
 
     return amendFunctionNode.execute(frame, parent);
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"isFunction(defaultValue)", "checkIsValidFunctionAmendment(defaultValue)"})
+  protected Object evalNullableFunction(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue,
+      @Cached(value = "createAmendFunctionNode(frame)", neverDefault = true)
+          AmendFunctionNode amendFunctionNode) {
+    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
   }
 
   @Specialization(
@@ -160,6 +180,22 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
         parent,
         createMembers(parent.getLength()),
         parent.getLength() + elements.length);
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"getClass(defaultValue) == getListingClass()", "checkIsValidListingAmendment()"})
+  protected Object evalNullableListing(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentListing = (VmListing) defaultValue;
+    checkMaxListingMemberIndex(parentListing.getLength());
+    return new VmListing(
+        frame.materialize(),
+        parentListing,
+        createMembers(parentListing.getLength()),
+        parentListing.getLength() + elements.length);
   }
 
   @Fallback

@@ -17,6 +17,7 @@ package org.pkl.core.ast.expression.literal;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -31,6 +32,7 @@ import org.pkl.core.runtime.*;
 
 /** Object literal that contains properties but not elements or entries. */
 // IDEA: don't materialize frame when all members are constants
+@ImportStatic({BaseModule.class, VmUtils.class})
 public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode {
   public PropertiesLiteralNode(
       SourceSection sourceSection,
@@ -82,14 +84,49 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
     return new VmTyped(frame.materialize(), parent, parent.getVmClass(), members);
   }
 
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {
+        "isTypedObjectClass(getClass(defaultValue))",
+        "checkIsValidTypedAmendment(defaultValue)"
+      })
+  protected Object evalNullableTypedObject(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentTyped = (VmTyped) defaultValue;
+    return new VmTyped(frame.materialize(), parentTyped, parentTyped.getVmClass(), members);
+  }
+
   @Specialization
   protected Object evalDynamic(VirtualFrame frame, VmDynamic parent) {
     return new VmDynamic(frame.materialize(), parent, members, parent.getLength());
   }
 
+  @SuppressWarnings("unused")
+  @Specialization(guards = "getClass(defaultValue) == getDynamicClass()")
+  protected Object evalNullableDynamic(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentDynamic = (VmDynamic) defaultValue;
+    return new VmDynamic(frame.materialize(), parentDynamic, members, parentDynamic.getLength());
+  }
+
   @Specialization(guards = "checkIsValidListingAmendment()")
   protected Object evalListing(VirtualFrame frame, VmListing parent) {
     return new VmListing(frame.materialize(), parent, members, parent.getLength());
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"getClass(defaultValue) == getListingClass()", "checkIsValidListingAmendment()"})
+  protected Object evalNullableListing(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentListing = (VmListing) defaultValue;
+    return new VmListing(frame.materialize(), parentListing, members, parentListing.getLength());
   }
 
   @ExplodeLoop
@@ -98,10 +135,14 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
     return new VmMapping(frame.materialize(), parent, members);
   }
 
-  @Specialization
-  protected Object evalNull(VirtualFrame frame, VmNull parent) {
-    // assumes that Graal PE can handle recursive call to same node
-    return executeWithParent(frame, parent.getDefaultValue());
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"getClass(defaultValue) == getMappingClass()", "checkIsValidMappingAmendment()"})
+  protected Object evalNullableMapping(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    return new VmMapping(frame.materialize(), (VmMapping) defaultValue, members);
   }
 
   // Ultimately, this lambda or a lambda returned from it will call one of the other
@@ -119,6 +160,18 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
           AmendFunctionNode amendFunctionNode) {
 
     return amendFunctionNode.execute(frame, parent);
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"isFunction(defaultValue)", "checkIsValidFunctionAmendment(defaultValue)"})
+  protected Object evalNullableFunction(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue,
+      @Cached(value = "createAmendFunctionNode(frame)", neverDefault = true)
+          AmendFunctionNode amendFunctionNode) {
+    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
   }
 
   @Specialization(

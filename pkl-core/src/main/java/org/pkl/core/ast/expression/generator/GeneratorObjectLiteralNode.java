@@ -34,7 +34,7 @@ import org.pkl.core.ast.type.UnresolvedTypeNode;
 import org.pkl.core.runtime.*;
 
 /** An object literal node that contains at least one for- or when-expression. */
-@ImportStatic(BaseModule.class)
+@ImportStatic({BaseModule.class, VmUtils.class})
 public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @Children private final GeneratorMemberNode[] memberNodes;
 
@@ -80,6 +80,22 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
     return data.storeGeneratorFrames(result);
   }
 
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"getClass(defaultValue) == getDynamicClass()", "checkObjectCannotHaveParameters()"})
+  protected Object evalNullableDynamic(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentDynamic = (VmDynamic) defaultValue;
+    var data = executeChildren(frame, parentDynamic, parentDynamic.getLength());
+    if (data.hasNoMembers()) {
+      return parentDynamic;
+    }
+    var result = new VmDynamic(frame.materialize(), parentDynamic, data.members(), data.length());
+    return data.storeGeneratorFrames(result);
+  }
+
   @Specialization(guards = "checkObjectCannotHaveParameters()")
   protected VmTyped evalTyped(VirtualFrame frame, VmTyped parent) {
     VmUtils.checkIsInstantiable(parent.getVmClass(), getParentNode());
@@ -91,6 +107,23 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
     return new VmTyped(frame.materialize(), parent, parent.getVmClass(), data.members());
   }
 
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"isTypedObjectClass(getClass(defaultValue))", "checkObjectCannotHaveParameters()"})
+  protected Object evalNullableTyped(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentTyped = (VmTyped) defaultValue;
+    VmUtils.checkIsInstantiable(parentTyped.getVmClass(), getParentNode());
+    var data = executeChildren(frame, parentTyped, 0);
+    if (data.hasNoMembers()) {
+      return parentTyped;
+    }
+    assert data.hasNoGeneratorFrames();
+    return new VmTyped(frame.materialize(), parentTyped, parentTyped.getVmClass(), data.members());
+  }
+
   @Specialization(guards = "checkListingCannotHaveParameters()")
   protected VmListing evalListing(VirtualFrame frame, VmListing parent) {
     var data = executeChildren(frame, parent, parent.getLength());
@@ -98,6 +131,25 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
       return parent;
     }
     var result = new VmListing(frame.materialize(), parent, data.members(), data.length());
+    return data.storeGeneratorFrames(result);
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {
+        "getClass(defaultValue) == getListingClass()",
+        "checkListingCannotHaveParameters()"
+      })
+  protected Object evalNullableListing(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentListing = (VmListing) defaultValue;
+    var data = executeChildren(frame, parentListing, parentListing.getLength());
+    if (data.hasNoMembers()) {
+      return parentListing;
+    }
+    var result = new VmListing(frame.materialize(), parentListing, data.members(), data.length());
     return data.storeGeneratorFrames(result);
   }
 
@@ -111,10 +163,23 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
     return data.storeGeneratorFrames(result);
   }
 
-  @Specialization(guards = "checkObjectCannotHaveParameters()")
-  protected Object evalNull(VirtualFrame frame, VmNull parent) {
-    // assumes that Graal PE can handle recursive call to same node
-    return executeWithParent(frame, parent.getDefaultValue());
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {
+        "getClass(defaultValue) == getMappingClass()",
+        "checkMappingCannotHaveParameters()"
+      })
+  protected Object evalNullableMapping(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentMapping = (VmMapping) defaultValue;
+    var data = executeChildren(frame, parentMapping, 0);
+    if (data.hasNoMembers()) {
+      return parentMapping;
+    }
+    var result = new VmMapping(frame.materialize(), parentMapping, data.members());
+    return data.storeGeneratorFrames(result);
   }
 
   @Specialization(guards = "checkIsValidFunctionAmendment(parent)")
@@ -125,6 +190,18 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
           AmendFunctionNode amendFunctionNode) {
 
     return amendFunctionNode.execute(frame, parent);
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"isFunction(defaultValue)", "checkIsValidFunctionAmendment(defaultValue)"})
+  protected Object evalNullableFunction(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue,
+      @Cached(value = "createAmendFunctionNode(frame)", neverDefault = true)
+          AmendFunctionNode amendFunctionNode) {
+    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
   }
 
   @Specialization(guards = {"parent == getDynamicClass()", "checkObjectCannotHaveParameters()"})

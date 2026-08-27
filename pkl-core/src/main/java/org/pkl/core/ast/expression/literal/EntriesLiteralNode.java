@@ -38,7 +38,7 @@ import org.pkl.core.util.EconomicMaps;
  * used.) Example: `foo { ["on" + "e"] = 1 }`
  */
 // IDEA: don't materialize frames if all members have constant values
-@ImportStatic(BaseModule.class)
+@ImportStatic({BaseModule.class, VmUtils.class})
 public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
   @Children private final ExpressionNode[] keyNodes;
   private final ObjectMember[] values;
@@ -92,9 +92,30 @@ public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
     return new VmMapping(frame.materialize(), parent, createMapMembers(frame));
   }
 
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"getClass(defaultValue) == getMappingClass()", "checkIsValidMappingAmendment()"})
+  protected Object evalNullableMapping(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    return new VmMapping(frame.materialize(), (VmMapping) defaultValue, createMapMembers(frame));
+  }
+
   @Specialization
   protected VmDynamic evalDynamic(VirtualFrame frame, VmDynamic parent) {
     return new VmDynamic(frame.materialize(), parent, createMapMembers(frame), parent.getLength());
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(guards = "getClass(defaultValue) == getDynamicClass()")
+  protected Object evalNullableDynamic(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentDynamic = (VmDynamic) defaultValue;
+    return new VmDynamic(
+        frame.materialize(), parentDynamic, createMapMembers(frame), parentDynamic.getLength());
   }
 
   @Specialization(guards = "checkIsValidListingAmendment()")
@@ -107,10 +128,19 @@ public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
         parent.getLength());
   }
 
-  @Specialization
-  protected Object evalNull(VirtualFrame frame, VmNull parent) {
-    // assumes that Graal PE can handle recursive call to same node
-    return executeWithParent(frame, parent.getDefaultValue());
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"getClass(defaultValue) == getListingClass()", "checkIsValidListingAmendment()"})
+  protected Object evalNullableListing(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentListing = (VmListing) defaultValue;
+    return new VmListing(
+        frame.materialize(),
+        parentListing,
+        createListMembers(frame, parentListing.getLength()),
+        parentListing.getLength());
   }
 
   @Specialization(guards = "checkIsValidFunctionAmendment(parent)")
@@ -121,6 +151,18 @@ public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
           AmendFunctionNode amendFunctionNode) {
 
     return amendFunctionNode.execute(frame, parent);
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"isFunction(defaultValue)", "checkIsValidFunctionAmendment(defaultValue)"})
+  protected Object evalNullableFunction(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue,
+      @Cached(value = "createAmendFunctionNode(frame)", neverDefault = true)
+          AmendFunctionNode amendFunctionNode) {
+    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
   }
 
   @Specialization(guards = {"parent == getMappingClass()", "checkIsValidMappingAmendment()"})

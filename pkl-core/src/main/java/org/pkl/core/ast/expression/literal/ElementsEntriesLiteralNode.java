@@ -36,7 +36,7 @@ import org.pkl.core.util.EconomicMaps;
  * Object literal that contains both elements and entries (and possibly properties). Example: `new
  * foo { "pigeon", [3] = "barn owl" }`
  */
-@ImportStatic(BaseModule.class)
+@ImportStatic({BaseModule.class, VmUtils.class})
 public abstract class ElementsEntriesLiteralNode extends SpecializedObjectLiteralNode {
   private final ObjectMember[] elements;
   @Children private final ExpressionNode[] keyNodes;
@@ -95,6 +95,21 @@ public abstract class ElementsEntriesLiteralNode extends SpecializedObjectLitera
         parent.getLength() + elements.length);
   }
 
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"getClass(defaultValue) == getListingClass()", "checkIsValidListingAmendment()"})
+  protected Object evalNullableListing(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentListing = (VmListing) defaultValue;
+    return new VmListing(
+        frame.materialize(),
+        parentListing,
+        createMembers(frame, parentListing.getLength()),
+        parentListing.getLength() + elements.length);
+  }
+
   @Specialization
   protected VmDynamic evalDynamic(VirtualFrame frame, VmDynamic parent) {
     return new VmDynamic(
@@ -104,10 +119,18 @@ public abstract class ElementsEntriesLiteralNode extends SpecializedObjectLitera
         parent.getLength() + elements.length);
   }
 
-  @Specialization
-  protected Object evalNull(VirtualFrame frame, VmNull parent) {
-    // assumes that Graal PE can handle recursive call to same node
-    return executeWithParent(frame, parent.getDefaultValue());
+  @SuppressWarnings("unused")
+  @Specialization(guards = "getClass(defaultValue) == getDynamicClass()")
+  protected Object evalNullableDynamic(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+    var parentDynamic = (VmDynamic) defaultValue;
+    return new VmDynamic(
+        frame.materialize(),
+        parentDynamic,
+        createMembers(frame, parentDynamic.getLength()),
+        parentDynamic.getLength() + elements.length);
   }
 
   @Specialization(guards = "checkIsValidFunctionAmendment(parent)")
@@ -118,6 +141,18 @@ public abstract class ElementsEntriesLiteralNode extends SpecializedObjectLitera
           AmendFunctionNode amendFunctionNode) {
 
     return amendFunctionNode.execute(frame, parent);
+  }
+
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {"isFunction(defaultValue)", "checkIsValidFunctionAmendment(defaultValue)"})
+  protected Object evalNullableFunction(
+      VirtualFrame frame,
+      VmNull parent,
+      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue,
+      @Cached(value = "createAmendFunctionNode(frame)", neverDefault = true)
+          AmendFunctionNode amendFunctionNode) {
+    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
   }
 
   @Specialization(guards = {"parent == getListingClass()", "checkIsValidListingAmendment()"})

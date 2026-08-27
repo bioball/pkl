@@ -20,6 +20,7 @@ import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.source.SourceSection;
 import org.jspecify.annotations.Nullable;
 import org.pkl.core.ast.ExpressionNode;
@@ -28,6 +29,7 @@ import org.pkl.core.ast.type.UnresolvedTypeNode;
 import org.pkl.core.runtime.VmClass;
 import org.pkl.core.runtime.VmFunction;
 import org.pkl.core.runtime.VmLanguage;
+import org.pkl.core.runtime.VmNull;
 import org.pkl.core.runtime.VmUtils;
 
 // IDEA: don't materialize frames when all members are constants
@@ -71,7 +73,11 @@ public abstract class ObjectLiteralNode extends ExpressionNode {
 
   @Idempotent
   protected static boolean isTypedObjectClass(VmClass clazz) {
-    return !(clazz.isListingClass() || clazz.isMappingClass() || clazz.isDynamicClass());
+    return !(clazz.isListingClass()
+        || clazz.isMappingClass()
+        || clazz.isDynamicClass()
+        || clazz.isFunctionClass()
+        || clazz.isFunctionNClass());
   }
 
   protected final boolean checkIsValidFunctionAmendment(VmFunction parent) {
@@ -84,5 +90,24 @@ public abstract class ObjectLiteralNode extends ExpressionNode {
           .build();
     }
     return true;
+  }
+
+  protected final boolean checkIsValidFunctionAmendment(Object parent) {
+    return checkIsValidFunctionAmendment((VmFunction) parent);
+  }
+
+  protected final boolean isFunction(Object value) {
+    return value instanceof VmFunction;
+  }
+
+  protected final Object getNullDefaultValue(VmNull parent) {
+    var value = parent.getDefaultValue();
+    var count = 0;
+    while (value instanceof VmNull n) {
+      value = n.getDefaultValue();
+      count++;
+    }
+    LoopNode.reportLoopCount(this, count);
+    return value;
   }
 }
