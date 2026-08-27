@@ -136,10 +136,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
 
   @SuppressWarnings("unused")
   @Specialization(
-      guards = {
-        "getClass(defaultValue).isListingClass()",
-        "checkListingCannotHaveParameters()"
-      })
+      guards = {"getClass(defaultValue).isListingClass()", "checkListingCannotHaveParameters()"})
   protected Object evalNullableListing(
       VirtualFrame frame,
       VmNull parent,
@@ -165,10 +162,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
 
   @SuppressWarnings("unused")
   @Specialization(
-      guards = {
-        "getClass(defaultValue).isMappingClass()",
-        "checkMappingCannotHaveParameters()"
-      })
+      guards = {"getClass(defaultValue).isMappingClass()", "checkMappingCannotHaveParameters()"})
   protected Object evalNullableMapping(
       VirtualFrame frame,
       VmNull parent,
