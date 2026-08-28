@@ -55,3 +55,9 @@ hidden foo: "foo"?
 
 // error: default value's type has no matching specialization; falls back to the generic error
 res10 = test.catch(() -> (foo) { foo = "bar" })
+
+hidden clazz: Class?
+
+res11 = (clazz) {
+  x = 1
+}

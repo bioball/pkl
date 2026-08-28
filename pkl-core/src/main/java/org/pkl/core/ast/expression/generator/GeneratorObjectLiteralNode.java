@@ -84,7 +84,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"getClass(defaultValue).isDynamicClass()", "checkObjectCannotHaveParameters()"})
-  protected Object evalNullableDynamic(
+  protected Object evalNullWithDynamicDefault(
       VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
     var parentDynamic = (VmDynamic) defaultValue;
     var data = executeChildren(frame, parentDynamic, parentDynamic.getLength());
@@ -109,7 +109,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"isTypedObjectClass(getClass(defaultValue))", "checkObjectCannotHaveParameters()"})
-  protected Object evalNullableTyped(
+  protected Object evalNullWithTypedDefault(
       VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
     return evalTyped(frame, (VmTyped) defaultValue);
   }
@@ -127,7 +127,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"getClass(defaultValue).isListingClass()", "checkListingCannotHaveParameters()"})
-  protected Object evalNullableListing(
+  protected Object evalNullWithListingDefault(
       VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
     return evalListing(frame, (VmListing) defaultValue);
   }
@@ -145,7 +145,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"getClass(defaultValue).isMappingClass()", "checkMappingCannotHaveParameters()"})
-  protected Object evalNullableMapping(
+  protected Object evalNullWithMappingDefault(
       VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
     return evalMapping(frame, (VmMapping) defaultValue);
   }
@@ -163,7 +163,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"isFunction(defaultValue)", "checkIsValidFunctionAmendment(defaultValue)"})
-  protected Object evalNullableFunction(
+  protected Object evalNullWithFunctionDefault(
       VirtualFrame frame,
       VmNull parent,
       @Bind("getNullDefaultValue(parent)") Object defaultValue,

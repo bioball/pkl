@@ -96,7 +96,7 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
 
   @SuppressWarnings("unused")
   @Specialization(guards = "getClass(defaultValue).isDynamicClass()")
-  protected Object evalNullableDynamic(
+  protected Object evalNullWithDynamicDefault(
       VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
     return evalDynamicUncached(frame, (VmDynamic) defaultValue);
   }
@@ -114,7 +114,7 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"isFunction(defaultValue)", "checkIsValidFunctionAmendment(defaultValue)"})
-  protected Object evalNullableFunction(
+  protected Object evalNullWithFunctionDefault(
       VirtualFrame frame,
       VmNull parent,
       @Bind("getNullDefaultValue(parent)") Object defaultValue,
@@ -177,7 +177,7 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"getClass(defaultValue).isListingClass()", "checkIsValidListingAmendment()"})
-  protected Object evalNullableListing(
+  protected Object evalNullWithListingDefault(
       VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
     return evalListingUncached(frame, (VmListing) defaultValue);
   }

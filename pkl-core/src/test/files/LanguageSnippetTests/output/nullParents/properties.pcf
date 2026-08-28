@@ -17,3 +17,6 @@ res7 = "Object of type `Listing` cannot have a property (other than `default`)."
 res8 = "Object of type `Mapping` cannot have a property (other than `default`)."
 res9 = "Expected a function with 1 parameters, but got 2."
 res10 = "Cannot instantiate, or amend an instance of, external class `String`."
+res11 {
+  x = 1
+}

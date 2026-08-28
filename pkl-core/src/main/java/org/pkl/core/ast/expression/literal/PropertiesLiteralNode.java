@@ -92,7 +92,7 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
         "isTypedObjectClass(parentClass)",
         "checkIsValidTypedAmendment(parentClass)"
       })
-  protected Object evalNullableTypedObjectCached(
+  protected Object evalNullWithTypedObjectDefaultCached(
       VirtualFrame frame,
       VmNull parent,
       @Bind("getNullDefaultValue(parent)") Object defaultValue,
@@ -107,7 +107,7 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
         "isTypedObjectClass(getClass(defaultValue))",
         "checkIsValidTypedAmendment(defaultValue)"
       })
-  protected Object evalNullableTypedObjectUncached(
+  protected Object evalNullWithTypedObjectDefaultUncached(
       VirtualFrame frame,
       VmNull parent,
       @Bind(value = "getNullDefaultValue(parent)") Object defaultValue) {
@@ -115,7 +115,6 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
     return new VmTyped(frame.materialize(), parentTyped, parentTyped.getVmClass(), members);
   }
 
-  // intentionally no `evalNullableDynamic` specialization; no need to run checks
   @Specialization
   protected Object evalDynamic(VirtualFrame frame, VmDynamic parent) {
     return new VmDynamic(frame.materialize(), parent, members, parent.getLength());
@@ -123,7 +122,7 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
 
   @SuppressWarnings("unused")
   @Specialization(guards = "getClass(defaultValue).isDynamicClass()")
-  protected Object evalNullableDynamic(
+  protected Object evalNullWithDynamicDefault(
       VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
     return evalDynamic(frame, (VmDynamic) defaultValue);
   }
@@ -136,7 +135,7 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"getClass(defaultValue).isListingClass()", "checkIsValidListingAmendment()"})
-  protected Object evalNullableListing(
+  protected Object evalNullWithListingDefault(
       VirtualFrame frame,
       VmNull parent,
       @Bind(value = "getNullDefaultValue(parent)") Object defaultValue) {
@@ -153,7 +152,7 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"getClass(defaultValue).isMappingClass()", "checkIsValidMappingAmendment()"})
-  protected Object evalNullableMapping(
+  protected Object evalNullWithMappingDefault(
       VirtualFrame frame,
       VmNull parent,
       @Bind(value = "getNullDefaultValue(parent)") Object defaultValue) {
@@ -180,7 +179,7 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   @SuppressWarnings("unused")
   @Specialization(
       guards = {"isFunction(defaultValue)", "checkIsValidFunctionAmendment(defaultValue)"})
-  protected Object evalNullableFunction(
+  protected Object evalNullWithFunctionDefault(
       VirtualFrame frame,
       VmNull parent,
       @Bind("getNullDefaultValue(parent)") Object defaultValue,
