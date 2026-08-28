@@ -16,6 +16,7 @@
 package org.pkl.core.ast.expression.literal;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -99,15 +100,8 @@ public abstract class ElementsEntriesLiteralNode extends SpecializedObjectLitera
   @Specialization(
       guards = {"getClass(defaultValue).isListingClass()", "checkIsValidListingAmendment()"})
   protected Object evalNullableListing(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentListing = (VmListing) defaultValue;
-    return new VmListing(
-        frame.materialize(),
-        parentListing,
-        createMembers(frame, parentListing.getLength()),
-        parentListing.getLength() + elements.length);
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalListing(frame, (VmListing) defaultValue);
   }
 
   @Specialization
@@ -122,15 +116,8 @@ public abstract class ElementsEntriesLiteralNode extends SpecializedObjectLitera
   @SuppressWarnings("unused")
   @Specialization(guards = "getClass(defaultValue).isDynamicClass()")
   protected Object evalNullableDynamic(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentDynamic = (VmDynamic) defaultValue;
-    return new VmDynamic(
-        frame.materialize(),
-        parentDynamic,
-        createMembers(frame, parentDynamic.getLength()),
-        parentDynamic.getLength() + elements.length);
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalDynamic(frame, (VmDynamic) defaultValue);
   }
 
   @Specialization(guards = "checkIsValidFunctionAmendment(parent)")
@@ -149,9 +136,9 @@ public abstract class ElementsEntriesLiteralNode extends SpecializedObjectLitera
   protected Object evalNullableFunction(
       VirtualFrame frame,
       VmNull parent,
-      @Cached("getNullDefaultValue(parent)") Object defaultValue,
+      @Bind("getNullDefaultValue(parent)") Object defaultValue,
       @Cached("createAmendFunctionNode(frame)") AmendFunctionNode amendFunctionNode) {
-    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
+    return evalFunction(frame, (VmFunction) defaultValue, amendFunctionNode);
   }
 
   @Specialization(guards = {"parent == getListingClass()", "checkIsValidListingAmendment()"})
@@ -179,7 +166,12 @@ public abstract class ElementsEntriesLiteralNode extends SpecializedObjectLitera
   @Fallback
   @TruffleBoundary
   protected void fallback(Object parent) {
-    elementsEntriesFallback(parent, elements[0], true);
+    var value = parent;
+    // blame the non-null type (e.g. blame `Duration` instead of `Null` in the case of `Duration?`)
+    if (value instanceof VmNull vmNull) {
+      value = getNullDefaultValue(vmNull);
+    }
+    elementsEntriesFallback(value, elements[0], true);
   }
 
   @ExplodeLoop

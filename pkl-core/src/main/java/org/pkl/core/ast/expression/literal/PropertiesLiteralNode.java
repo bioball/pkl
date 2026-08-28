@@ -16,6 +16,7 @@
 package org.pkl.core.ast.expression.literal;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -87,17 +88,34 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   @SuppressWarnings("unused")
   @Specialization(
       guards = {
-        "isTypedObjectClass(getClass(defaultValue))",
-        "checkIsValidTypedAmendment(defaultValue)"
+        "parentClass == getClass(defaultValue)",
+        "isTypedObjectClass(parentClass)",
+        "checkIsValidTypedAmendment(parentClass)"
       })
-  protected Object evalNullableTypedObject(
+  protected Object evalNullableTypedObjectCached(
       VirtualFrame frame,
       VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+      @Bind("getNullDefaultValue(parent)") Object defaultValue,
+      @Cached("getClass(defaultValue)") VmClass parentClass) {
     var parentTyped = (VmTyped) defaultValue;
     return new VmTyped(frame.materialize(), parentTyped, parentTyped.getVmClass(), members);
   }
 
+  @SuppressWarnings("unused")
+  @Specialization(
+      guards = {
+        "isTypedObjectClass(getClass(defaultValue))",
+        "checkIsValidTypedAmendment(defaultValue)"
+      })
+  protected Object evalNullableTypedObjectUncached(
+      VirtualFrame frame,
+      VmNull parent,
+      @Bind(value = "getNullDefaultValue(parent)") Object defaultValue) {
+    var parentTyped = (VmTyped) defaultValue;
+    return new VmTyped(frame.materialize(), parentTyped, parentTyped.getVmClass(), members);
+  }
+
+  // intentionally no `evalNullableDynamic` specialization; no need to run checks
   @Specialization
   protected Object evalDynamic(VirtualFrame frame, VmDynamic parent) {
     return new VmDynamic(frame.materialize(), parent, members, parent.getLength());
@@ -106,11 +124,8 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   @SuppressWarnings("unused")
   @Specialization(guards = "getClass(defaultValue).isDynamicClass()")
   protected Object evalNullableDynamic(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentDynamic = (VmDynamic) defaultValue;
-    return new VmDynamic(frame.materialize(), parentDynamic, members, parentDynamic.getLength());
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalDynamic(frame, (VmDynamic) defaultValue);
   }
 
   @Specialization(guards = "checkIsValidListingAmendment()")
@@ -124,8 +139,8 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   protected Object evalNullableListing(
       VirtualFrame frame,
       VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentListing = (VmListing) defaultValue;
+      @Bind(value = "getNullDefaultValue(parent)") Object defaultValue) {
+    var parentListing = (VmListing) getNullDefaultValue(parent);
     return new VmListing(frame.materialize(), parentListing, members, parentListing.getLength());
   }
 
@@ -141,8 +156,8 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   protected Object evalNullableMapping(
       VirtualFrame frame,
       VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    return new VmMapping(frame.materialize(), (VmMapping) defaultValue, members);
+      @Bind(value = "getNullDefaultValue(parent)") Object defaultValue) {
+    return evalMapping(frame, (VmMapping) defaultValue);
   }
 
   // Ultimately, this lambda or a lambda returned from it will call one of the other
@@ -168,9 +183,10 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   protected Object evalNullableFunction(
       VirtualFrame frame,
       VmNull parent,
-      @Cached("getNullDefaultValue(parent)") Object defaultValue,
-      @Cached("createAmendFunctionNode(frame)") AmendFunctionNode amendFunctionNode) {
-    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
+      @Bind("getNullDefaultValue(parent)") Object defaultValue,
+      @Cached(value = "createAmendFunctionNode(frame)", neverDefault = true)
+          AmendFunctionNode amendFunctionNode) {
+    return evalFunction(frame, (VmFunction) defaultValue, amendFunctionNode);
   }
 
   @Specialization(
@@ -251,8 +267,13 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
   @Specialization
   @TruffleBoundary
   protected void fallback(Object parent) {
+    var value = parent;
+    // blame the non-null type (e.g. blame `Duration` instead of `Null` in the case of `Duration?`)
+    if (value instanceof VmNull vmNull) {
+      value = getNullDefaultValue(vmNull);
+    }
     // should always throw
-    checkIsValidTypedAmendment(parent);
+    checkIsValidTypedAmendment(value);
 
     throw exceptionBuilder().unreachableCode().build();
   }

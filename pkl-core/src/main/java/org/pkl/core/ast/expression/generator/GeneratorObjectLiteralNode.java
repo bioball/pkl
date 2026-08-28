@@ -17,6 +17,7 @@ package org.pkl.core.ast.expression.generator;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Idempotent;
@@ -84,9 +85,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @Specialization(
       guards = {"getClass(defaultValue).isDynamicClass()", "checkObjectCannotHaveParameters()"})
   protected Object evalNullableDynamic(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
     var parentDynamic = (VmDynamic) defaultValue;
     var data = executeChildren(frame, parentDynamic, parentDynamic.getLength());
     if (data.hasNoMembers()) {
@@ -111,17 +110,8 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @Specialization(
       guards = {"isTypedObjectClass(getClass(defaultValue))", "checkObjectCannotHaveParameters()"})
   protected Object evalNullableTyped(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentTyped = (VmTyped) defaultValue;
-    VmUtils.checkIsInstantiable(parentTyped.getVmClass(), getParentNode());
-    var data = executeChildren(frame, parentTyped, 0);
-    if (data.hasNoMembers()) {
-      return parentTyped;
-    }
-    assert data.hasNoGeneratorFrames();
-    return new VmTyped(frame.materialize(), parentTyped, parentTyped.getVmClass(), data.members());
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalTyped(frame, (VmTyped) defaultValue);
   }
 
   @Specialization(guards = "checkListingCannotHaveParameters()")
@@ -138,16 +128,8 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @Specialization(
       guards = {"getClass(defaultValue).isListingClass()", "checkListingCannotHaveParameters()"})
   protected Object evalNullableListing(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentListing = (VmListing) defaultValue;
-    var data = executeChildren(frame, parentListing, parentListing.getLength());
-    if (data.hasNoMembers()) {
-      return parentListing;
-    }
-    var result = new VmListing(frame.materialize(), parentListing, data.members(), data.length());
-    return data.storeGeneratorFrames(result);
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalListing(frame, (VmListing) defaultValue);
   }
 
   @Specialization(guards = "checkMappingCannotHaveParameters()")
@@ -164,16 +146,8 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @Specialization(
       guards = {"getClass(defaultValue).isMappingClass()", "checkMappingCannotHaveParameters()"})
   protected Object evalNullableMapping(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentMapping = (VmMapping) defaultValue;
-    var data = executeChildren(frame, parentMapping, 0);
-    if (data.hasNoMembers()) {
-      return parentMapping;
-    }
-    var result = new VmMapping(frame.materialize(), parentMapping, data.members());
-    return data.storeGeneratorFrames(result);
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalMapping(frame, (VmMapping) defaultValue);
   }
 
   @Specialization(guards = "checkIsValidFunctionAmendment(parent)")
@@ -192,9 +166,9 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   protected Object evalNullableFunction(
       VirtualFrame frame,
       VmNull parent,
-      @Cached("getNullDefaultValue(parent)") Object defaultValue,
+      @Bind("getNullDefaultValue(parent)") Object defaultValue,
       @Cached("createAmendFunctionNode(frame)") AmendFunctionNode amendFunctionNode) {
-    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
+    return evalFunction(frame, (VmFunction) defaultValue, amendFunctionNode);
   }
 
   @Specialization(guards = {"parent == getDynamicClass()", "checkObjectCannotHaveParameters()"})
@@ -243,8 +217,13 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
   @Fallback
   @TruffleBoundary
   protected void fallback(Object parent) {
+    var value = parent;
+    // blame the non-null type (e.g. blame `Duration` instead of `Null` in the case of `Duration?`)
+    if (value instanceof VmNull vmNull) {
+      value = getNullDefaultValue(vmNull);
+    }
     VmUtils.checkIsInstantiable(
-        parent instanceof VmClass vmClass ? vmClass : VmUtils.getClass(parent), getParentNode());
+        value instanceof VmClass vmClass ? vmClass : VmUtils.getClass(value), getParentNode());
 
     throw exceptionBuilder().unreachableCode().build();
   }
@@ -256,7 +235,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
     CompilerDirectives.transferToInterpreter();
     throw exceptionBuilder()
         .evalError("objectAmendmentCannotHaveParameters")
-        .withLocation(parameterTypes[0])
+        .withLocation(getParentNode())
         .build();
   }
 
@@ -267,7 +246,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
     CompilerDirectives.transferToInterpreter();
     throw exceptionBuilder()
         .evalError("listingAmendmentCannotHaveParameters")
-        .withLocation(parameterTypes[0])
+        .withLocation(getParentNode())
         .build();
   }
 
@@ -278,7 +257,7 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
     CompilerDirectives.transferToInterpreter();
     throw exceptionBuilder()
         .evalError("mappingAmendmentCannotHaveParameters")
-        .withLocation(parameterTypes[0])
+        .withLocation(getParentNode())
         .build();
   }
 

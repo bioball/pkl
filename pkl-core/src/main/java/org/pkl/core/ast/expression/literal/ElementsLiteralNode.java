@@ -97,15 +97,8 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
   @SuppressWarnings("unused")
   @Specialization(guards = "getClass(defaultValue).isDynamicClass()")
   protected Object evalNullableDynamic(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentDynamic = (VmDynamic) defaultValue;
-    return new VmDynamic(
-        frame.materialize(),
-        parentDynamic,
-        createMembers(parentDynamic.getLength()),
-        parentDynamic.getLength() + elements.length);
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalDynamicUncached(frame, (VmDynamic) defaultValue);
   }
 
   @Specialization(guards = "checkIsValidFunctionAmendment(parent)")
@@ -124,9 +117,9 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
   protected Object evalNullableFunction(
       VirtualFrame frame,
       VmNull parent,
-      @Cached("getNullDefaultValue(parent)") Object defaultValue,
+      @Bind("getNullDefaultValue(parent)") Object defaultValue,
       @Cached("createAmendFunctionNode(frame)") AmendFunctionNode amendFunctionNode) {
-    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
+    return evalFunction(frame, (VmFunction) defaultValue, amendFunctionNode);
   }
 
   @Specialization(
@@ -185,22 +178,19 @@ public abstract class ElementsLiteralNode extends SpecializedObjectLiteralNode {
   @Specialization(
       guards = {"getClass(defaultValue).isListingClass()", "checkIsValidListingAmendment()"})
   protected Object evalNullableListing(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentListing = (VmListing) defaultValue;
-    checkMaxListingMemberIndex(parentListing.getLength());
-    return new VmListing(
-        frame.materialize(),
-        parentListing,
-        createMembers(parentListing.getLength()),
-        parentListing.getLength() + elements.length);
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalListingUncached(frame, (VmListing) defaultValue);
   }
 
   @Fallback
   @TruffleBoundary
   protected void fallback(Object parent) {
-    elementsEntriesFallback(parent, elements[0], true);
+    var value = parent;
+    // blame the non-null type (e.g. blame `Duration` instead of `Null` in the case of `Duration?`)
+    if (value instanceof VmNull vmNull) {
+      value = getNullDefaultValue(vmNull);
+    }
+    elementsEntriesFallback(value, elements[0], true);
   }
 
   // offset element keys according to parentLength

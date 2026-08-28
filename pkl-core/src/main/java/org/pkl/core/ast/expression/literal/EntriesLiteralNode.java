@@ -96,10 +96,8 @@ public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
   @Specialization(
       guards = {"getClass(defaultValue).isMappingClass()", "checkIsValidMappingAmendment()"})
   protected Object evalNullableMapping(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    return new VmMapping(frame.materialize(), (VmMapping) defaultValue, createMapMembers(frame));
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalMapping(frame, (VmMapping) defaultValue);
   }
 
   @Specialization
@@ -108,14 +106,10 @@ public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
   }
 
   @SuppressWarnings("unused")
-  @Specialization(guards = "getClass(defaultValue).isDynamicClass()")
+  @Specialization(guards = {"getClass(defaultValue).isDynamicClass()"})
   protected Object evalNullableDynamic(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentDynamic = (VmDynamic) defaultValue;
-    return new VmDynamic(
-        frame.materialize(), parentDynamic, createMapMembers(frame), parentDynamic.getLength());
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalDynamic(frame, (VmDynamic) defaultValue);
   }
 
   @Specialization(guards = "checkIsValidListingAmendment()")
@@ -132,15 +126,8 @@ public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
   @Specialization(
       guards = {"getClass(defaultValue).isListingClass()", "checkIsValidListingAmendment()"})
   protected Object evalNullableListing(
-      VirtualFrame frame,
-      VmNull parent,
-      @Cached(value = "getNullDefaultValue(parent)", neverDefault = true) Object defaultValue) {
-    var parentListing = (VmListing) defaultValue;
-    return new VmListing(
-        frame.materialize(),
-        parentListing,
-        createListMembers(frame, parentListing.getLength()),
-        parentListing.getLength());
+      VirtualFrame frame, VmNull parent, @Bind("getNullDefaultValue(parent)") Object defaultValue) {
+    return evalListing(frame, (VmListing) defaultValue);
   }
 
   @Specialization(guards = "checkIsValidFunctionAmendment(parent)")
@@ -159,9 +146,9 @@ public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
   protected Object evalNullableFunction(
       VirtualFrame frame,
       VmNull parent,
-      @Cached("getNullDefaultValue(parent)") Object defaultValue,
+      @Bind("getNullDefaultValue(parent)") Object defaultValue,
       @Cached("createAmendFunctionNode(frame)") AmendFunctionNode amendFunctionNode) {
-    return amendFunctionNode.execute(frame, (VmFunction) defaultValue);
+    return evalFunction(frame, (VmFunction) defaultValue, amendFunctionNode);
   }
 
   @Specialization(guards = {"parent == getMappingClass()", "checkIsValidMappingAmendment()"})
@@ -193,7 +180,12 @@ public abstract class EntriesLiteralNode extends SpecializedObjectLiteralNode {
   @Fallback
   @TruffleBoundary
   protected Object fallback(Object parent) {
-    return elementsEntriesFallback(parent, values[0], false);
+    var value = parent;
+    // blame the non-null type (e.g. blame `Duration` instead of `Null` in the case of `Duration?`)
+    if (value instanceof VmNull vmNull) {
+      value = getNullDefaultValue(vmNull);
+    }
+    return elementsEntriesFallback(value, values[0], false);
   }
 
   @ExplodeLoop
