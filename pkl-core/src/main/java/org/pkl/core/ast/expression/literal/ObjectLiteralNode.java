@@ -20,7 +20,6 @@ import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.source.SourceSection;
 import org.jspecify.annotations.Nullable;
@@ -115,7 +114,6 @@ public abstract class ObjectLiteralNode extends ExpressionNode {
     return value instanceof VmFunction;
   }
 
-  @ExplodeLoop
   protected final Object getNullDefaultValue(VmNull parent) {
     var value = parent.getDefaultValue();
     var count = 0;

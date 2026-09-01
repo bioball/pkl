@@ -167,7 +167,8 @@ public abstract class GeneratorObjectLiteralNode extends ObjectLiteralNode {
       VirtualFrame frame,
       VmNull parent,
       @Bind("getNullDefaultValue(parent)") Object defaultValue,
-      @Cached("createAmendFunctionNode(frame)") AmendFunctionNode amendFunctionNode) {
+      @Cached(value = "createAmendFunctionNode(frame)", neverDefault = true)
+          AmendFunctionNode amendFunctionNode) {
     return evalFunction(frame, (VmFunction) defaultValue, amendFunctionNode);
   }
 
