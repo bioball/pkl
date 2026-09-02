@@ -12,19 +12,19 @@ res1 = (mapping) {
   [id("b")] = 2
 }
 
-// evalNullableDynamic
+// evalNullWithDynamicDefault
 local dynamic = Null(new Dynamic { a = 1 })
 res2 = (dynamic) {
   [id("b")] = 2
 }
 
-// evalNullableListing
+// evalNullWithListingDefault
 local listing = Null(new Listing { "a"; "b" })
 res3 = (listing) {
   [id(0)] = "updated a"
 }
 
-// evalNullableFunction
+// evalNullWithFunctionDefault
 local fun = Null(() -> new Mapping { ["a"] = 1 })
 local amendedFun = (fun) {
   [id("b")] = 2

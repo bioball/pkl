@@ -5,7 +5,7 @@ import "pkl:test"
 
 function id(x) = x
 
-// evalNullableDynamic
+// evalNullWithDynamicDefault
 local dynamic = Null(new Dynamic { "a" })
 
 res1 = (dynamic) {
@@ -13,14 +13,14 @@ res1 = (dynamic) {
   "b"
 }
 
-// evalNullableListing
+// evalNullWithListingDefault
 local listing = Null(new Listing { "a"; "b" })
 res2 = (listing) {
   "c"
   [id(0)] = "updated a"
 }
 
-// evalNullableFunction
+// evalNullWithFunctionDefault
 local fun = Null(() -> new Listing { "a" })
 local amendedFun = (fun) {
   "b"

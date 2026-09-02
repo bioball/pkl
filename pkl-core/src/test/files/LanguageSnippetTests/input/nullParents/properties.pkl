@@ -7,19 +7,19 @@ local class Person {
   age: Int = 0
 }
 
-// evalNullableTypedObject
+// evalNullWithTypedDefault
 local person = Null(new Person { name = "Pigeon" })
 res1 = (person) {
   age = 3
 }
 
-// evalNullableDynamic
+// evalNullWithDynamicDefault
 local dynamic = Null(new Dynamic { name = "Pigeon" })
 res2 = (dynamic) {
   age = 3
 }
 
-// evalNullableListing
+// evalNullWithListingDefault
 local listing = Null(new Listing { "one"; "two" })
 res3 = (listing) {
   default = (_) -> "three"
@@ -31,7 +31,7 @@ res4 = (mapping) {
   default = (_) -> 0
 }.getOrDefault("missing")
 
-// evalNullableFunction
+// evalNullWithFunctionDefault
 local fun = Null(() -> new Dynamic { zero = 0 })
 local amendedFun = (fun) {
   amended = "amended"

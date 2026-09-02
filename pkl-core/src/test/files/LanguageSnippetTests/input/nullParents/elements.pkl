@@ -2,21 +2,21 @@
 // each of the underlying parent types it supports.
 import "pkl:test"
 
-// evalNullableDynamic
+// evalNullWithDynamicDefault
 local dynamic = Null(new Dynamic { a = 1 })
 res1 = (dynamic) {
   "b"
   "c"
 }
 
-// evalNullableListing
+// evalNullWithListingDefault
 local listing = Null(new Listing { "a" })
 res2 = (listing) {
   "b"
   "c"
 }
 
-// evalNullableFunction
+// evalNullWithFunctionDefault
 local fun = Null(() -> new Listing { "a" })
 local amendedFun = (fun) {
   "b"
