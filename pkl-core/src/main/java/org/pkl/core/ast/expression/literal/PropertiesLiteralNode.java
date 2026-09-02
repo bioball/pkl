@@ -139,8 +139,7 @@ public abstract class PropertiesLiteralNode extends SpecializedObjectLiteralNode
       VirtualFrame frame,
       VmNull parent,
       @Bind(value = "getNullDefaultValue(parent)") Object defaultValue) {
-    var parentListing = (VmListing) getNullDefaultValue(parent);
-    return new VmListing(frame.materialize(), parentListing, members, parentListing.getLength());
+    return evalListing(frame, (VmListing) defaultValue);
   }
 
   @ExplodeLoop

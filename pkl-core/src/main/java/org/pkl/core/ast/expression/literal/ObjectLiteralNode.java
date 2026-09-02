@@ -79,17 +79,7 @@ public abstract class ObjectLiteralNode extends ExpressionNode {
         || clazz.isFunctionNClass()) {
       return false;
     }
-    if (clazz == BaseModule.getTypedClass()) {
-      return true;
-    }
-    var superClass = clazz.getSuperclass();
-    while (superClass != null) {
-      if (superClass == BaseModule.getTypedClass()) {
-        return true;
-      }
-      superClass = superClass.getSuperclass();
-    }
-    return false;
+    return BaseModule.getTypedClass().isSuperclassOf(clazz);
   }
 
   protected final boolean checkIsValidFunctionAmendment(VmFunction parent) {
@@ -119,6 +109,7 @@ public abstract class ObjectLiteralNode extends ExpressionNode {
     var count = 0;
     while (value instanceof VmNull n) {
       value = n.getDefaultValue();
+      count++;
     }
     LoopNode.reportLoopCount(this, count);
     return value;
