@@ -21,6 +21,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleStackTrace;
+import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.frame.*;
 import com.oracle.truffle.api.nodes.*;
 import com.oracle.truffle.api.source.Source;
@@ -528,6 +529,7 @@ public final class VmUtils {
   }
 
   // implements same behavior as AnyNodes#getClass
+  @Idempotent
   public static VmClass getClass(Object value) {
     if (value instanceof VmValue vmValue) {
       return vmValue.getVmClass();
