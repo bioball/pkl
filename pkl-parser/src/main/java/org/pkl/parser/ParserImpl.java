@@ -94,26 +94,51 @@ import org.pkl.parser.util.SortedIntArray;
 
 @SuppressWarnings("DuplicatedCode")
 final class ParserImpl {
-  private final Lexer lexer;
   private Token lookahead;
   private Span spanLookahead;
-  private boolean backtracking = false;
-  private FullToken prev = new FullToken(Token.SOF, new Span(0, 0), 0);
+  // index in `tokens` of `_lookahead`
+  private int cursor = 0;
+  private static final FullToken SOF = new FullToken(Token.SOF, new Span(0, 0), 0, false);
+  private FullToken prev = SOF;
+  // index in `tokens` of `prev`, or -1
+  private int prevCursor = -1;
   private FullToken _lookahead;
+  private final Lexer lexer;
   private boolean precededBySemicolon = false;
+  // The whole file, lexed up front. Includes comments, but not semicolons (see
+  // `FullToken.precededBySemicolon`).
+  private final List<FullToken> tokens;
+  // A lexing error is thrown once the parser reaches it, not eagerly, so that syntax errors
+  // that come earlier in the file are reported first (and partial parse results are available).
+  private @Nullable ParserError lexError;
+  // index in `tokens` of the token that follows the last token that was lexed successfully
+  private int lexErrorCursor = -1;
   private int speculativeTokenCount = 0;
   private final Set<Integer> failedTypeArgAttempts = new HashSet<>();
   private boolean isSpeculativeParse = false;
-  private final String source;
   // char indices of `<` that might start a type argument list
   private @Nullable SortedIntArray typeArgCandidates;
 
   ParserImpl(String source) {
-    this.source = source;
     this.lexer = new Lexer(source);
-    _lookahead = forceNext();
-    lookahead = _lookahead.token;
-    spanLookahead = _lookahead.span;
+    this.tokens = new ArrayList<>();
+    try {
+      while (true) {
+        var ft = makeNextToken();
+        tokens.add(ft);
+        if (ft.token == Token.EOF) {
+          break;
+        }
+      }
+    } catch (ParserError e) {
+      lexError = e;
+      lexErrorCursor = tokens.size();
+      // placeholder so that the parser can run up until the error
+      tokens.add(new FullToken(Token.EOF, new Span(lexer.getCursor(), 0), 0, false));
+    }
+    _lookahead = skipComments();
+    throwIfLexError();
+    setLookahead();
   }
 
   Module parseModule() {
@@ -1584,14 +1609,9 @@ final class ParserImpl {
         || !isTypeArgCandidate(spanLookahead.charIndex())) {
       return null;
     }
-    var lexerSnapshot = lexer.snapshot();
-    var savedLookahead = lookahead;
-    var savedSpanLookahead = spanLookahead;
-    var savedBacktracking = backtracking;
-    var savedPrev = prev;
-    var savedFullLookahead = _lookahead;
-    var savedPrecededBySemicolon = precededBySemicolon;
-    var savedIsSpeculativeParse = isSpeculativeParse;
+    var currentCursor = cursor;
+    var currentCharIndex = spanLookahead.charIndex();
+    var currentIsSpeculativeParse = isSpeculativeParse;
     isSpeculativeParse = true;
     try {
       var typeArgs = parseTypeArgumentList();
@@ -1601,22 +1621,20 @@ final class ParserImpl {
     } catch (ParserError ignored) {
       // not a type argument list
     } finally {
-      isSpeculativeParse = savedIsSpeculativeParse;
+      isSpeculativeParse = currentIsSpeculativeParse;
     }
-    failedTypeArgAttempts.add(savedSpanLookahead.charIndex());
-    lexer.restore(lexerSnapshot);
-    lookahead = savedLookahead;
-    spanLookahead = savedSpanLookahead;
-    backtracking = savedBacktracking;
-    prev = savedPrev;
-    _lookahead = savedFullLookahead;
-    precededBySemicolon = savedPrecededBySemicolon;
+    failedTypeArgAttempts.add(currentCharIndex);
+    backtrackTo(currentCursor);
     return null;
   }
 
   private boolean isTypeArgCandidate(int charIndex) {
     if (typeArgCandidates == null) {
-      typeArgCandidates = TypeArgumentCandidates.scan(new Lexer(source));
+      var scanner = new TypeArgumentCandidates();
+      for (var tk : tokens) {
+        scanner.accept(tk.token, tk.span.charIndex());
+      }
+      typeArgCandidates = scanner.candidates();
     }
     return typeArgCandidates.contains(charIndex);
   }
@@ -1901,60 +1919,113 @@ final class ParserImpl {
       }
       speculativeTokenCount++;
     }
-    if (backtracking) {
-      backtracking = false;
-      lookahead = _lookahead.token;
-      spanLookahead = _lookahead.span;
-      return prev;
-    }
     prev = _lookahead;
-    _lookahead = forceNext();
-    lookahead = _lookahead.token;
-    spanLookahead = _lookahead.span;
+    prevCursor = cursor;
+    // like the lexer, stay on EOF once reached
+    if (cursor < tokens.size() - 1) {
+      cursor++;
+    }
+    _lookahead = skipComments();
+    throwIfLexError();
+    setLookahead();
     return prev;
   }
 
-  private FullToken forceNext() {
+  /** Lexes the next token. Semicolons are folded into the token that follows them. */
+  private FullToken makeNextToken() {
     var tk = lexer.next();
-    precededBySemicolon = false;
     var newLines = lexer.getNewLinesBetween();
-    while (tk.isAffix()) {
-      precededBySemicolon = precededBySemicolon || tk == Token.SEMICOLON;
+    var semicolon = false;
+    while (tk == Token.SEMICOLON) {
+      semicolon = true;
       tk = lexer.next();
       newLines += lexer.getNewLinesBetween();
     }
-    return new FullToken(tk, lexer.span(), newLines);
+    return new FullToken(tk, lexer.span(), newLines, semicolon);
+  }
+
+  private static boolean isComment(Token token) {
+    return token == Token.LINE_COMMENT || token == Token.BLOCK_COMMENT;
+  }
+
+  /** Moves {@code cursor} to the next token that is not a comment, and returns it. */
+  private FullToken skipComments() {
+    while (isComment(tokens.get(cursor).token)) {
+      cursor++;
+    }
+    return viewAt(cursor);
+  }
+
+  /**
+   * The token at {@code index}, as seen by {@link #next()}, which ignores comments: newlines and
+   * semicolons that come before skipped comments count as coming before this token.
+   */
+  private FullToken viewAt(int index) {
+    var tk = tokens.get(index);
+    if (isComment(tk.token) || index == 0 || !isComment(tokens.get(index - 1).token)) {
+      return tk;
+    }
+    var newLines = tk.newLinesBetween;
+    var semicolon = tk.precededBySemicolon;
+    for (var i = index - 1; i >= 0 && isComment(tokens.get(i).token); i--) {
+      newLines += tokens.get(i).newLinesBetween;
+      semicolon |= tokens.get(i).precededBySemicolon;
+    }
+    return new FullToken(tk.token, tk.span, newLines, semicolon);
+  }
+
+  private void setLookahead() {
+    lookahead = _lookahead.token;
+    spanLookahead = _lookahead.span;
+    precededBySemicolon = _lookahead.precededBySemicolon;
+  }
+
+  private void throwIfLexError() {
+    if (cursor == lexErrorCursor) {
+      assert lexError != null;
+    throw lexError;
+    }
   }
 
   // Like next, but don't ignore comments
   private FullToken nextComment() {
     prev = _lookahead;
-    _lookahead = forceNextComment();
-    lookahead = _lookahead.token;
-    spanLookahead = _lookahead.span;
-    return prev;
-  }
-
-  private FullToken forceNextComment() {
-    var tk = lexer.next();
-    precededBySemicolon = false;
-    while (tk == Token.SEMICOLON) {
-      precededBySemicolon = true;
-      tk = lexer.next();
+    prevCursor = cursor;
+    if (cursor < tokens.size() - 1) {
+      cursor++;
     }
-    return new FullToken(tk, lexer.span(), lexer.getNewLinesBetween());
+    _lookahead = tokens.get(cursor);
+    throwIfLexError();
+    setLookahead();
+    return prev;
   }
 
   /**
    * Backtrack to the previous token.
-   *
-   * <p>Can only backtrack one token.
    */
   private void backtrack() {
-    assert !backtracking;
-    lookahead = prev.token;
-    spanLookahead = prev.span;
-    backtracking = true;
+    assert prevCursor >= 0;
+    cursor = prevCursor;
+    _lookahead = prev;
+    setLookahead();
+    setPrevBefore(cursor);
+  }
+
+  private void backtrackTo(int cursor) {
+    this.cursor = cursor;
+    _lookahead = viewAt(cursor);
+    setLookahead();
+    setPrevBefore(cursor);
+  }
+
+  // Sets `prev` to the last token that is not a comment before `index`.
+  private void setPrevBefore(int index) {
+    var i = index - 1;
+    while (i >= 0 && isComment(tokens.get(i).token)) {
+      i--;
+    }
+    prevCursor = i;
+    prev = i < 0 ? SOF : viewAt(i);
   }
 
   private void ensureEmptyHeaders(MemberHeader header, String messageArg) {
@@ -1964,7 +2035,8 @@ final class ParserImpl {
     }
   }
 
-  private record FullToken(Token token, Span span, int newLinesBetween) {
+  private record FullToken(
+      Token token, Span span, int newLinesBetween, boolean precededBySemicolon) {
     String text(Lexer lexer) {
       return lexer.textFor(span.charIndex(), span.length());
     }

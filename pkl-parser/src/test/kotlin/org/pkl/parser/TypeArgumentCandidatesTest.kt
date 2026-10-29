@@ -19,8 +19,19 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class TypeArgumentCandidatesTest {
-  private fun candidates(source: String): IntArray =
-    TypeArgumentCandidates.scan(Lexer(source)).toArray()
+  private fun candidates(source: String): IntArray {
+    val lexer = Lexer(source)
+    val scanner = TypeArgumentCandidates()
+    try {
+      while (true) {
+        val token = lexer.next()
+        if (token == Token.EOF) break
+        scanner.accept(token, lexer.startCursor)
+      }
+    } catch (_: ParserError) {
+    }
+    return scanner.candidates().toArray()
+  }
 
   @Test
   fun `empty input`() {
