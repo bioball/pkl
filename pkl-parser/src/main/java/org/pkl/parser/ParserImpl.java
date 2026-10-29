@@ -107,7 +107,7 @@ final class ParserImpl {
   private boolean precededBySemicolon = false;
   // The whole file, lexed up front. Includes comments, but not semicolons (see
   // `FullToken.precededBySemicolon`).
-  private final List<FullToken> tokens;
+  private final FullToken[] tokens;
   // A lexing error is thrown once the parser reaches it, not eagerly, so that syntax errors
   // that come earlier in the file are reported first (and partial parse results are available).
   private @Nullable ParserError lexError;
@@ -121,21 +121,22 @@ final class ParserImpl {
 
   ParserImpl(String source) {
     this.lexer = new Lexer(source);
-    this.tokens = new ArrayList<>();
+    var list = new ArrayList<FullToken>();
     try {
       while (true) {
         var ft = makeNextToken();
-        tokens.add(ft);
+        list.add(ft);
         if (ft.token == Token.EOF) {
           break;
         }
       }
     } catch (ParserError e) {
       lexError = e;
-      lexErrorCursor = tokens.size();
+      lexErrorCursor = list.size();
       // placeholder so that the parser can run up until the error
-      tokens.add(new FullToken(Token.EOF, new Span(lexer.getCursor(), 0), 0, false));
+      list.add(new FullToken(Token.EOF, new Span(lexer.getCursor(), 0), 0, false));
     }
+    tokens = list.toArray(new FullToken[0]);
     _lookahead = skipComments();
     throwIfLexError();
     setLookahead();
@@ -1922,7 +1923,7 @@ final class ParserImpl {
     prev = _lookahead;
     prevCursor = cursor;
     // like the lexer, stay on EOF once reached
-    if (cursor < tokens.size() - 1) {
+    if (cursor < tokens.length - 1) {
       cursor++;
     }
     _lookahead = skipComments();
@@ -1950,7 +1951,7 @@ final class ParserImpl {
 
   /** Moves {@code cursor} to the next token that is not a comment, and returns it. */
   private FullToken skipComments() {
-    while (isComment(tokens.get(cursor).token)) {
+    while (isComment(tokens[cursor].token)) {
       cursor++;
     }
     return viewAt(cursor);
@@ -1961,15 +1962,16 @@ final class ParserImpl {
    * semicolons that come before skipped comments count as coming before this token.
    */
   private FullToken viewAt(int index) {
-    var tk = tokens.get(index);
-    if (isComment(tk.token) || index == 0 || !isComment(tokens.get(index - 1).token)) {
+    var tk = tokens[index];
+    if (isComment(tk.token) || index == 0 || !isComment(tokens[index - 1].token)) {
       return tk;
     }
     var newLines = tk.newLinesBetween;
     var semicolon = tk.precededBySemicolon;
-    for (var i = index - 1; i >= 0 && isComment(tokens.get(i).token); i--) {
-      newLines += tokens.get(i).newLinesBetween;
-      semicolon |= tokens.get(i).precededBySemicolon;
+    for (var i = index - 1; i >= 0 && isComment(tokens[i].token); i--) {
+      var _token = tokens[i];
+      newLines += _token.newLinesBetween;
+      semicolon |= _token.precededBySemicolon;
     }
     return new FullToken(tk.token, tk.span, newLines, semicolon);
   }
@@ -1991,10 +1993,10 @@ final class ParserImpl {
   private FullToken nextComment() {
     prev = _lookahead;
     prevCursor = cursor;
-    if (cursor < tokens.size() - 1) {
+    if (cursor < tokens.length - 1) {
       cursor++;
     }
-    _lookahead = tokens.get(cursor);
+    _lookahead = tokens[cursor];
     throwIfLexError();
     setLookahead();
     return prev;
@@ -2021,7 +2023,7 @@ final class ParserImpl {
   // Sets `prev` to the last token that is not a comment before `index`.
   private void setPrevBefore(int index) {
     var i = index - 1;
-    while (i >= 0 && isComment(tokens.get(i).token)) {
+    while (i >= 0 && isComment(tokens[i].token)) {
       i--;
     }
     prevCursor = i;
