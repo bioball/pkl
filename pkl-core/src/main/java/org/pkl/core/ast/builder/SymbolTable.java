@@ -358,8 +358,11 @@ public final class SymbolTable {
       var lexicalScope = getLexicalScope();
       while (lexicalScope.getConstLevel() == ConstLevel.ALL) {
         // LambdaScope inherits constLevel but doesn't create a const scope barrier.
-        // Method scopes don't level up.
-        if (!(lexicalScope instanceof LambdaScope) && !(lexicalScope instanceof MethodScope)) {
+        // Method scopes, let expression scopes, and for generator scopes don't level up.
+        if (!(lexicalScope instanceof LambdaScope)
+            && !(lexicalScope instanceof MethodScope)
+            && !(lexicalScope instanceof LetExpressionScope)
+            && !(lexicalScope instanceof ForGeneratorScope)) {
           depth += 1;
         }
         var parent = lexicalScope.getParent();
